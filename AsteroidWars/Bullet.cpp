@@ -33,7 +33,7 @@ void Bullet::Update()
 
 bool Bullet::OutOfBounds(Vector2f playerPos)
 {
-	if (DistanceFromPlayer(playerPos) > m_windowWidth / 2)
+	if (DistanceFromPlayer(playerPos) > m_windowWidth)
 	{
 	return true;
 	}
