@@ -17,6 +17,7 @@ public:
 
 	Vector2f GetCentre();
 	Vector2f GetPosition();
+	float mod(float a, float b);
 private:
 	Vector2f m_position;
 	Vector2f m_velocity;

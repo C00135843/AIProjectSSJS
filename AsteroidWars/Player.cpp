@@ -47,6 +47,12 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_shootTimerLimit = 30;
 }
 
+float Player::mod(float a, float b)
+{
+	float thing = a - b * floor(a / b);
+	return a - b * floor(a / b);
+}
+
 void Player::Update()
 {
 	// Shoot timer
@@ -67,6 +73,7 @@ void Player::Update()
 	if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
 	{
 		m_position += m_velocity;
+		m_position = Vector2f(mod(m_position.x, m_fullWidth), mod(m_position.y, m_fullHeight));
 		m_playerSprite.setPosition(m_position);
 	}
 	if (Keyboard::isKeyPressed(Keyboard::Space))
