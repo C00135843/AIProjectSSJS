@@ -2,8 +2,14 @@
 #include "Player.h"
 //#include <cmath>
 
-Player::Player(int windowWidth, int windowHeight)
+Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 {
+	// Width and height
+	m_windowWidth = windowWidth;
+	m_windowHeight = windowHeight;
+	m_fullWidth = fullWidth;
+	m_fullHeight = fullHeight;
+
 	// Load main menu background image
 	m_playerTexture.loadFromFile("Pics/PlayerSpaceship.png");
 	m_playerSprite = sf::Sprite(m_playerTexture);
@@ -12,8 +18,8 @@ Player::Player(int windowWidth, int windowHeight)
 	m_squareSprite = sf::Sprite(m_squareTexture);
 
 	// Set position
-	m_position.x = windowWidth / 2;
-	m_position.y = windowHeight / 2;
+	m_position.x = m_windowWidth / 2;
+	m_position.y = m_windowHeight / 2;
 	m_playerSprite.setPosition(m_position);
 
 	// Set velocity
@@ -79,6 +85,8 @@ void Player::Update()
 
 	m_squareSprite.setPosition(m_playerSprite.getPosition());
 
+	cout << m_bullets.size() << endl;
+
 	// Update bullets
 	if (m_bullets.size() > 0)
 	{
@@ -88,7 +96,7 @@ void Player::Update()
 			(*m_bulletIterator)->Update();
 
 			// Remove bullet if out of bounds
-			if ((*m_bulletIterator)->OutOfBounds())
+			if ((*m_bulletIterator)->OutOfBounds(GetPosition()))
 			{
 				m_bullets.erase(m_bulletIterator);
 				break;
@@ -103,7 +111,7 @@ void Player::Shoot()
 	bulletPos.x = m_position.x;
 	bulletPos.y = m_position.y;
 
-	Bullet* bullet = new Bullet(bulletPos, m_velocity);
+	Bullet* bullet = new Bullet(bulletPos, m_velocity, m_windowWidth, m_windowHeight, m_fullWidth, m_fullHeight);
 
 	m_bullets.push_back(bullet);
 }
@@ -111,7 +119,7 @@ void Player::Shoot()
 void Player::Draw(RenderWindow &window)
 {
 	window.draw(m_playerSprite);
-	window.draw(m_squareSprite);
+	//window.draw(m_squareSprite);
 
 	// Draw bullets
 	if (m_bullets.size() > 0)
@@ -130,4 +138,9 @@ Vector2f Player::GetCentre()
 	centre.y = m_playerSprite.getPosition().y + (m_playerSprite.getGlobalBounds().height / 2);
 
 	return centre;
+}
+
+Vector2f Player::GetPosition()
+{
+	return m_position;
 }

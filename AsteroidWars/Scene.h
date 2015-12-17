@@ -6,7 +6,7 @@
 class Scene
 {
 public:
-	Scene(int windowWidth, int windowHeight);
+	Scene(int windowWidth, int windowHeight, int fullWidth, int fullHeight);
 
 	void Update();
 	void Draw(RenderWindow &window);

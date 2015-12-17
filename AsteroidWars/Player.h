@@ -8,7 +8,7 @@
 class Player
 {
 public:
-	Player(int windowWidth, int windowHeight);
+	Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight);
 
 	void Update();
 	void Draw(RenderWindow &window);
@@ -16,6 +16,7 @@ public:
 	void Shoot();
 
 	Vector2f GetCentre();
+	Vector2f GetPosition();
 private:
 	Vector2f m_position;
 	Vector2f m_velocity;
@@ -34,6 +35,11 @@ private:
 	int m_shootTimer;
 	int m_shootTimerLimit;
 	std::list<Bullet*>::iterator m_bulletIterator;
+
+	int m_windowWidth;
+	int m_windowHeight;
+	int m_fullWidth;
+	int m_fullHeight;
 };
 
 #endif
