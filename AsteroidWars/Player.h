@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Bullet.h"
 #include <list>
+#include "SwarmEnemy.h"
 
 class Player
 {
@@ -15,9 +16,18 @@ public:
 
 	void Shoot();
 
+	list<Bullet*> GetBullets();
+
 	Vector2f GetCentre();
 	Vector2f GetPosition();
+	Vector2f GetVelocity();
 	float mod(float a, float b);
+
+	bool CheckBulletCollision(SwarmEnemy *swarmEnemy);
+	bool CheckSwarmCollision(SwarmEnemy *swarmEnemy);
+
+	int GetHealth();
+	void SetHealth(int myHealth);
 private:
 	Vector2f m_position;
 	Vector2f m_velocity;
@@ -41,6 +51,9 @@ private:
 	int m_windowHeight;
 	int m_fullWidth;
 	int m_fullHeight;
+
+	int m_health;
+	bool m_alive;
 };
 
 #endif

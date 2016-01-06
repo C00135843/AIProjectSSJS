@@ -1,10 +1,19 @@
-// AsteroidWars.cpp : Defines the entry point for the console application.
-//
-
 #include "stdafx.h"
 #include "Player.h"
 #include "Scene.h"
+#include "Bullet.h"
 
+#include "Boid.h"
+#include "Flock.h"
+#include "SwarmEnemy.h"
+
+// For Boids
+string action = "swarm";
+Flock flock;
+vector<SwarmEnemy*> swarmEnemies;
+
+void CreateBoids(int, int);
+void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel);
 
 int main()
 {
@@ -31,6 +40,9 @@ int main()
 	// Class instances
 	Player player(windowWidth, windowHeight, fullWidth, fullHeight);
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
+	vector<SwarmEnemy*>::iterator m_swarmIterator;
+
+	CreateBoids(windowWidth, windowHeight);
 
 	// Start game loop 
 	while (window.isOpen())
@@ -52,6 +64,9 @@ int main()
 		window.clear();
 
 		// Set view
+		#pragma region Set Camera Position
+
+		// Focus camera on player
 		camPosition.x = player.GetPosition().x + 10 - (windowWidth / 2);
 		camPosition.y = player.GetPosition().y + 10 - (windowHeight / 2);
 
@@ -70,20 +85,54 @@ int main()
 		if (camPosition.y > fullHeight - windowHeight)
 		{
 			camPosition.y = fullHeight - windowHeight;
+
 		}
+
+		#pragma endregion
+
 
 		view.reset(FloatRect(camPosition.x, camPosition.y, windowWidth, windowHeight));
 
-		//view.setCenter(camPosition);
-
 		window.setView(view);
 
-		// Update
+		// Update & Draw
 		player.Update();
+		flock.GetDisanceFromPlayer(player.GetPosition());
 
-		// Draw
+		#pragma region Check Collisions
+
+		if (player.GetHealth() > 0)
+		{
+			// Check collision between bullet and swarm
+			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
+			{
+				// Bullet collision
+				if (player.CheckBulletCollision((*m_swarmIterator)))
+				{
+					// Remove boid
+					flock.removeBoid((*m_swarmIterator)->GetID());
+					swarmEnemies.erase(m_swarmIterator);
+					break;
+				}
+
+				// Player/Swarm collision
+				if (player.CheckSwarmCollision(*m_swarmIterator))
+				{
+					// Remove boid
+					flock.removeBoid((*m_swarmIterator)->GetID());
+					swarmEnemies.erase(m_swarmIterator);
+					player.SetHealth(player.GetHealth() - 20);
+					break;
+				}
+			}// End collision checking  
+		}
+
+		#pragma endregion
+
 		scene.Draw(window);
 		player.Draw(window);
+
+		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity());
 
 		window.setView(window.getDefaultView());
 
@@ -92,5 +141,64 @@ int main()
 	} //loop back for next frame
 
 	return EXIT_SUCCESS;
+}
+
+// Create boids for swarm enemies
+void CreateBoids(int window_width, int window_height)
+{
+	int noOfBoids = 20;
+
+	for (int i = 0; i < noOfBoids; i++)
+	{
+		Boid b(window_width, window_height, i);// Create boid
+		SwarmEnemy *swarmEnemy = new SwarmEnemy(i);
+
+		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
+		flock.addBoid(b, i);
+		swarmEnemies.push_back(swarmEnemy);
+	}
+}
+
+// Update the boids of the swarm enemies
+void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, Vector2f &playerPos, Vector2f &playerVel)
+{
+	// Draw and Update boids
+	for (int i = 0; i < swarmEnemies.size(); i++)
+	{
+		// Matches up the location of the swarm enemy to the boid
+		swarmEnemies[i]->SetPosition(flock.getBoid(i).location.x, flock.getBoid(i).location.y);
+
+		// Calculates the angle where the velocity is pointing so that the triangle turns towards it.
+		float theta;
+		theta = flock.getBoid(i).angle(flock.getBoid(i).velocity);
+		swarmEnemies[i]->SetRotation(theta);
+
+		// These if statements prevent boids from moving off the screen through wrapping
+
+		// If boid exits right boundary
+		if (swarmEnemies[i]->GetPosition().x > window_width)
+			swarmEnemies[i]->SetPosition(swarmEnemies[i]->GetPosition().x - window_width, swarmEnemies[i]->GetPosition().y);
+
+		// If boid exits bottom boundary
+		if (swarmEnemies[i]->GetPosition().y > window_height)
+			swarmEnemies[i]->SetPosition(swarmEnemies[i]->GetPosition().x, swarmEnemies[i]->GetPosition().y - window_height);
+
+		// If boid exits left boundary
+		if (swarmEnemies[i]->GetPosition().x < 0)
+			swarmEnemies[i]->SetPosition(swarmEnemies[i]->GetPosition().x + window_width, swarmEnemies[i]->GetPosition().y);
+
+		// If boid exits top boundary
+		if (swarmEnemies[i]->GetPosition().y < 0)
+			swarmEnemies[i]->SetPosition(swarmEnemies[i]->GetPosition().x, swarmEnemies[i]->GetPosition().y + window_height);
+
+		// Draw boids
+		swarmEnemies[i]->Draw(window);
+	}// End for
+
+	// Applies the three rules to each boid in the flock and changes them accordingly.
+	if (action == "flock")
+		flock.flocking();// Updates flock
+	else
+		flock.swarming(playerPos, playerVel);// Updates flock
 }
 

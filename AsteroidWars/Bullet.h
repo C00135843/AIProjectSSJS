@@ -11,6 +11,7 @@ public:
 
 	bool OutOfBounds(Vector2f);
 	float DistanceFromPlayer(Vector2f);
+	Sprite GetSprite();
 private:
 	Vector2f m_position;
 	Vector2f m_velocity;
