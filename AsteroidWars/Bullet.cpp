@@ -56,3 +56,8 @@ void Bullet::Draw(RenderWindow &window)
 {
 	window.draw(m_sprite);
 }
+
+Sprite Bullet::GetSprite()
+{
+	return m_sprite;
+}

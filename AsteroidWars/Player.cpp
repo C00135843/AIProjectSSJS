@@ -42,6 +42,10 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_speed = 5.0f;
 	m_rotationSpeed = 3.0f;
 
+	// Set health & Alive
+	m_health = 100;
+	m_alive = true;
+
 	// Bullets
 	m_shootTimer = 30;
 	m_shootTimerLimit = 30;
@@ -55,58 +59,65 @@ float Player::mod(float a, float b)
 
 void Player::Update()
 {
-	// Shoot timer
-	if (m_shootTimer <= m_shootTimerLimit)
-		m_shootTimer++;
+	if (m_alive)
+	{
+		// Shoot timer
+		if (m_shootTimer <= m_shootTimerLimit)
+			m_shootTimer++;
 
-	// Keyboard input
-	if (Keyboard::isKeyPressed(Keyboard::Left) || Keyboard::isKeyPressed(Keyboard::A))
-	{
-		m_rotation = -m_rotationSpeed;
-		m_playerSprite.rotate(m_rotation);
-	}
-	if (Keyboard::isKeyPressed(Keyboard::Right) || Keyboard::isKeyPressed(Keyboard::D))
-	{
-		m_rotation = m_rotationSpeed;
-		m_playerSprite.rotate(m_rotation);
-	}
-	if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
-	{
-		m_position += m_velocity;
-		m_position = Vector2f(mod(m_position.x, m_fullWidth), mod(m_position.y, m_fullHeight));
-		m_playerSprite.setPosition(m_position);
-	}
-	if (Keyboard::isKeyPressed(Keyboard::Space))
-	{
-		if (m_shootTimer >= m_shootTimerLimit)
+		// Set alive
+		if (m_health <= 0)
 		{
-			Shoot();
-			m_shootTimer = 0;
+			m_alive = false;
 		}
-	}
-	
 
-	// Set velocity
-	m_velocity.x = (float)sin(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
-	m_velocity.y = -(float)cos(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
-
-	m_squareSprite.setPosition(m_playerSprite.getPosition());
-
-	cout << m_bullets.size() << endl;
-
-	// Update bullets
-	if (m_bullets.size() > 0)
-	{
-		// Iterate through list of bullets
-		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		// Keyboard input
+		if (Keyboard::isKeyPressed(Keyboard::Left) || Keyboard::isKeyPressed(Keyboard::A))
 		{
-			(*m_bulletIterator)->Update();
-
-			// Remove bullet if out of bounds
-			if ((*m_bulletIterator)->OutOfBounds(GetPosition()))
+			m_rotation = -m_rotationSpeed;
+			m_playerSprite.rotate(m_rotation);
+		}
+		if (Keyboard::isKeyPressed(Keyboard::Right) || Keyboard::isKeyPressed(Keyboard::D))
+		{
+			m_rotation = m_rotationSpeed;
+			m_playerSprite.rotate(m_rotation);
+		}
+		if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
+		{
+			m_position += m_velocity;
+			m_position = Vector2f(mod(m_position.x, m_fullWidth), mod(m_position.y, m_fullHeight));
+			m_playerSprite.setPosition(m_position);
+		}
+		if (Keyboard::isKeyPressed(Keyboard::Space))
+		{
+			if (m_shootTimer >= m_shootTimerLimit)
 			{
-				m_bullets.erase(m_bulletIterator);
-				break;
+				Shoot();
+				m_shootTimer = 0;
+			}
+		}
+
+
+		// Set velocity
+		m_velocity.x = (float)sin(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
+		m_velocity.y = -(float)cos(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
+
+		m_squareSprite.setPosition(m_playerSprite.getPosition());
+
+		// Update bullets
+		if (m_bullets.size() > 0)
+		{
+			// Iterate through list of bullets
+			for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+			{
+				(*m_bulletIterator)->Update();
+
+				// Remove bullet if out of bounds
+				if ((*m_bulletIterator)->OutOfBounds(GetPosition()))
+				{
+					m_bullets.erase(m_bulletIterator);
+					break;
+				}
 			}
 		}
 	}
@@ -125,8 +136,10 @@ void Player::Shoot()
 
 void Player::Draw(RenderWindow &window)
 {
-	window.draw(m_playerSprite);
-	//window.draw(m_squareSprite);
+	if (m_alive)
+	{
+		window.draw(m_playerSprite);
+	}
 
 	// Draw bullets
 	if (m_bullets.size() > 0)
@@ -150,4 +163,78 @@ Vector2f Player::GetCentre()
 Vector2f Player::GetPosition()
 {
 	return m_position;
+}
+
+Vector2f Player::GetVelocity()
+{
+	return m_velocity;
+}
+
+list<Bullet*> Player::GetBullets()
+{
+	return m_bullets;
+}
+
+bool Player::CheckBulletSwarmCollision(SwarmEnemy *swarmEnemy)
+{
+	if (m_bullets.size() > 0)
+	{
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if ( swarmEnemy->GetSprite().getGlobalBounds().intersects( (*m_bulletIterator)->GetSprite().getGlobalBounds() ) )
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+bool Player::CheckSwarmCollision(SwarmEnemy *swarmEnemy)
+{
+	if (m_playerSprite.getGlobalBounds().intersects(swarmEnemy->GetSprite().getGlobalBounds()))
+	{
+		cout << "True" << endl;
+		return true;
+	}
+	return false;
+}
+
+bool Player::CheckObstacleCollision(Obstacle *obstacle)
+{
+	if (m_playerSprite.getGlobalBounds().intersects(obstacle->GetSprite().getGlobalBounds()))
+	{
+		cout << "Asteroid" << endl;
+		return true;
+	}
+	return false;
+}
+
+bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
+{
+	if (m_bullets.size() > 0)
+	{
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if (obstacle->GetSprite().getGlobalBounds().intersects((*m_bulletIterator)->GetSprite().getGlobalBounds()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+int Player::GetHealth()
+{
+	return m_health;
+}
+
+void Player::SetHealth(int myHealth)
+{
+	m_health = myHealth;
 }
