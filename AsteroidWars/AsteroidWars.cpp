@@ -45,7 +45,8 @@ int main()
 
 	// Window frame rate
 	window.setFramerateLimit(60);
-	srand(time(NULL));
+	sf::Clock m_clock;
+	sf::Time timeSinceLastUpdate;
 	// Class instances
 	Player player(windowWidth, windowHeight, fullWidth, fullHeight);
 	Factories factory(200, 200);//for test purposes
@@ -70,6 +71,9 @@ int main()
 	// Start game loop 
 	while (window.isOpen())
 	{
+		timeSinceLastUpdate = m_clock.getElapsedTime();
+		float time = timeSinceLastUpdate.asSeconds();
+		m_clock.restart();
 		// Process events 
 		sf::Event Event;
 		while (window.pollEvent(Event))
@@ -120,7 +124,7 @@ int main()
 
 		// Update & Draw
 		player.Update();
-		factory.Update();
+		factory.Update(&player,fullWidth,fullHeight);
 		
 		// Draw
 		flock.GetDisanceFromPlayer(player.GetPosition());
@@ -147,7 +151,7 @@ int main()
 					// Remove boid
 					flock.removeBoid((*m_swarmIterator)->GetID());
 					swarmEnemies.erase(m_swarmIterator);
-					player.SetHealth(player.GetHealth() - 20);
+					//player.SetHealth(player.GetHealth() - 20);
 					break;
 				}
 			}// End collision checking  
