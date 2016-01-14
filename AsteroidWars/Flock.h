@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "Boid.h"
+#include "Obstacle.h"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ class Flock
 private:
 	int m_id;
 	bool m_inRange;
+	bool m_avoid;
 	vector<Boid>::iterator flockIterator;
 public:
 	//Public Variables
@@ -31,13 +33,17 @@ public:
 	int getSize();
 	Boid getBoid(int i);
 
+	bool Avoid();
+	void SetAvoid(bool myAvoid);
+
 	// Mutator Functions
 	void addBoid(Boid b, int id);
 	void removeBoid(int id);
 	void flocking();
-	void swarming(Vector2f playerPos, Vector2f playerVel);
+	void swarming(Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> obstacles);
 
 	void GetDisanceFromPlayer(Vector2f &playerPos);
+	bool InRangeOfObstacle(Vector2f &obstalcePos);
 
 	bool InRange();
 	void SetInRange(bool myInRange);

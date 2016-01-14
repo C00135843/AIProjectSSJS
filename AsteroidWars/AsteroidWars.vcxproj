@@ -85,6 +85,7 @@
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Factories.h" />
     <ClInclude Include="Flock.h" />
+    <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Pvector.h" />
     <ClInclude Include="Scene.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Factories.cpp" />
     <ClCompile Include="Flock.cpp" />
+    <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Pvector.cpp" />
     <ClCompile Include="Scene.cpp" />

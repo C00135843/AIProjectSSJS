@@ -242,7 +242,7 @@ float Boid::angle(Pvector v)
 	return angle;
 }
 
-void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel)
+void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> obstacles)
 {
 	Pvector playerPosVector;
 	playerPosVector.x = playerPos.x;
@@ -253,11 +253,46 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel)
 	playerVelVector.y = playerVel.y;
 
 	Pvector seekVector;
+	seekVector.x = 0;
+	seekVector.y = 0;
 
-	if (!InRange())
-		seekVector = seekPlayer(playerPosVector);
-	else
-		seekVector = pursuePlayer(playerPosVector, playerVelVector);
+	//if (!Avoid())
+	//{
+		if (!InRange())
+			seekVector = seekPlayer(playerPosVector);
+		else
+			seekVector = pursuePlayer(playerPosVector, playerVelVector);
+	//}
+
+	Pvector avoidVector;
+	avoidVector.x = 0;
+	avoidVector.y = 0;
+
+	//if (Avoid())
+	//{
+		for each(Obstacle* obstacle in obstacles)
+		{
+			if (obstacle->getInRangeOfBoid())
+			{
+				//cout << "Here>>>>>>>" << endl;
+
+				Pvector obstaclePos;
+				obstaclePos.x = obstacle->GetPosition().x;
+				obstaclePos.y = obstacle->GetPosition().y;
+
+				Pvector obstalceVel;
+				obstalceVel.x = obstacle->GetVelocity().x;
+				obstalceVel.y = obstacle->GetVelocity().y;
+
+ 				avoidVector = avoid(obstaclePos, obstalceVel);
+
+				//////////////////
+
+				//velocity.x = location.x - obstaclePos.x;
+				//velocity.y = location.y - obstaclePos.y;
+			}
+		}
+	//}
 
 	Pvector	R;// 'R' is distance between current boid and boid being looked at in for loop
 	Pvector sum(0, 0);
@@ -293,6 +328,7 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel)
 
 	applyForce(sum);
 	applyForce(seekVector);// Makes boid go towards player
+	applyForce(avoidVector);// Makes boid go towards player
 
 	update(playerPosVector);
 }
@@ -368,6 +404,146 @@ Pvector Boid::pursuePlayer(Pvector pos, Pvector vel)
 		
 }
 
+//Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
+//{
+//	// Get distance between two
+//	Pvector Dp;
+//	Dp.x = obstalcePos.x - location.x;
+//	Dp.y = obstalcePos.y - location.y;
+//
+//	// Get relative velocity between two
+//	Pvector Dv;
+//	Dv.x = obstacleVel.x - velocity.x;
+//	Dv.y = obstacleVel.y - velocity.y;
+//
+//	// t = dp.dv / | dv | 2
+//	float time;
+//
+//	Pvector posByVel;
+//	Dp.mulVector(Dv);
+//	posByVel = Dp;
+//
+//	Pvector lengthOfDv;
+//	Dv.magnitude();
+//	lengthOfDv = Dv;
+//
+//	Pvector lengthOfDvSquared;
+//	lengthOfDvSquared.x = lengthOfDv.x * lengthOfDv.x;
+//	lengthOfDvSquared.y = lengthOfDv.y * lengthOfDv.y;
+//
+//	Pvector timeVector;
+//
+//	posByVel.divVector(lengthOfDvSquared);
+//
+//	timeVector.x = posByVel.x;
+//	timeVector.y = posByVel.y;
+//
+//	Pvector newPos;
+//
+//	newPos.x = location.x + velocity.x * timeVector.x;
+//	newPos.y = location.y + velocity.y * timeVector.y;
+//
+//	return newPos;
+//}
+
+Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
+{
+	Pvector ahead;
+	Pvector ahead2;
+
+	Pvector obstacleCentre;
+	obstacleCentre.x = obstalcePos.x + (35.75f / 2);
+	obstacleCentre.y = obstalcePos.y + (39.25f / 2);
+
+	float radius = 35.75f / 2;
+
+	float MAX_SEE_AHEAD = 150;
+
+	Pvector normalizedVelocity;
+	normalizedVelocity = velocity;
+	normalizedVelocity.normalize();
+
+	Pvector lengthVelocity;
+	lengthVelocity = velocity;
+	lengthVelocity.normalize();
+
+	Pvector dynamic_length;
+	dynamic_length.x = lengthVelocity.x / maxSpeed;
+	dynamic_length.y = lengthVelocity.y / maxSpeed;
+
+	ahead.x = location.x + normalizedVelocity.x * dynamic_length.x;
+	ahead.y = location.y + normalizedVelocity.y * dynamic_length.y;
+
+	ahead2.x = location.x + normalizedVelocity.x * dynamic_length.x * 0.5f;
+	ahead2.y = location.y + normalizedVelocity.y * dynamic_length.y * 0.5f;
+
+	float distance = ahead.distance(obstacleCentre);
+	float distance2 = ahead2.distance(obstacleCentre);
+
+	bool intersectedCircle = false;
+
+	if (distance <= radius || distance2 <= radius)
+	{
+		intersectedCircle = true;
+	}
+
+	Pvector avoidance_force;
+
+	avoidance_force.x = ahead.x - obstacleCentre.x;
+	avoidance_force.y = ahead.y - obstacleCentre.y;
+
+	float MAX_AVOID_FORCE = 30.5f;
+
+	Pvector normalized_avoidance_force;
+	normalized_avoidance_force = avoidance_force;
+	normalized_avoidance_force.normalize();
+
+	avoidance_force.x = normalized_avoidance_force.x * MAX_AVOID_FORCE;
+	avoidance_force.y = normalized_avoidance_force.y * MAX_AVOID_FORCE;
+
+	Pvector steering;
+	steering = avoidance_force;
+	steering.limit(maxForce);
+
+	return steering;
+}
+
+////desired_velocity = normalize(position - target) * max_velocity
+////steering = desired_velocity - velocity
+//
+//Pvector desired_velocity;
+//desired_velocity.x = location.x - obstalcePos.x;
+//desired_velocity.y = location.y - obstalcePos.y;
+//
+//desired_velocity.normalize();
+//desired_velocity.mulScalar(maxSpeed);
+//
+//Pvector steering;
+//steering.x = desired_velocity.x - velocity.x;
+//steering.y = desired_velocity.y - velocity.y;
+//
+//steering.limit(maxForce);
+//
+//return steering;
+
+void Boid::Distance(Vector2f obstaclePos)
+{
+	float distance;
+
+	// Get distance
+	distance = sqrt(((location.x - obstaclePos.x)*(location.x - obstaclePos.x)) + ((location.y - obstaclePos.y)*(location.y - obstaclePos.y)));
+
+	// Check if in range
+	if (distance <= 150)
+	{
+		SetAvoid(true);
+	}
+	else
+	{
+		SetAvoid(false);
+	}
+}
+
 #pragma region Getters/Setters
 
 bool Boid::InRange()
@@ -388,6 +564,16 @@ int Boid::GetID()
 void Boid::SetID(int id)
 {
 	m_id = id;
+}
+
+bool Boid::Avoid()
+{
+	return m_avoid;
+}
+
+void Boid::SetAvoid(bool myAvoid)
+{
+	m_avoid = myAvoid;
 }
 
 #pragma endregion

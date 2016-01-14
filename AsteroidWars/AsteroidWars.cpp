@@ -6,6 +6,11 @@
 #include "Boid.h"
 #include "Flock.h"
 #include "SwarmEnemy.h"
+#include "Obstacle.h"
+
+#include <stdio.h>      /* printf, scanf, puts, NULL */
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
 
 // For Boids
 string action = "swarm";
@@ -13,10 +18,13 @@ Flock flock;
 vector<SwarmEnemy*> swarmEnemies;
 
 void CreateBoids(int, int);
-void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel);
+void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
 
 int main()
 {
+	/* initialize random seed: */
+	srand(time(NULL));
+
 	// Render window width and height
 	int windowWidth = 800;
 	int windowHeight = 600;
@@ -42,7 +50,20 @@ int main()
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
 
+	// Create boids
 	CreateBoids(windowWidth, windowHeight);
+
+	// Create obstalces
+	vector<Obstacle*> obstacles;
+	Obstacle obstacleInstance;
+	vector<Obstacle*>::iterator m_obstacleIterator;
+	int noOfObstacles = 100;
+
+	for (int i = 0; i < noOfObstacles; i++)
+	{
+		//obstacles = obstacleInstance.CreateObstacle(windowWidth, windowHeight, player.GetPosition(), obstacles);
+		obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
+	}
 
 	// Start game loop 
 	while (window.isOpen())
@@ -107,7 +128,7 @@ int main()
 			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
 			{
 				// Bullet collision
-				if (player.CheckBulletCollision((*m_swarmIterator)))
+				if (player.CheckBulletSwarmCollision((*m_swarmIterator)))
 				{
 					// Remove boid
 					flock.removeBoid((*m_swarmIterator)->GetID());
@@ -132,7 +153,67 @@ int main()
 		scene.Draw(window);
 		player.Draw(window);
 
-		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity());
+		// Update/Draw obstacles
+		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
+		{
+			(*m_obstacleIterator)->Draw(window);
+			(*m_obstacleIterator)->Update();
+
+			// Bullet/Obstacle collision
+			if (player.CheckBulletObstacleCollision((*m_obstacleIterator)))
+			{
+				// Remove boid
+				obstacles.erase(m_obstacleIterator);
+				break;
+			}
+
+			// Player/Obstacle collision
+			if (player.CheckObstacleCollision((*m_obstacleIterator)))
+			{
+				obstacles.erase(m_obstacleIterator);
+
+				// Collision with an obstacle results in death!
+				//player.SetHealth(player.GetHealth() - 100);
+				break;
+			}
+
+			// Get distance from a swarm boid to a obstacle *****************
+			//flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition());
+
+			if ( flock.InRangeOfObstacle( (*m_obstacleIterator)->GetPosition() ) )
+			{
+				(*m_obstacleIterator)->setInRangeOfBoid(true);
+				//cout << "obstacle in range" << endl;
+			}
+			else
+			{
+				(*m_obstacleIterator)->setInRangeOfBoid(false);
+			}
+
+			// Collision between swarm boids and obstacles
+			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
+			{
+				// Collision
+				if ((*m_obstacleIterator)->CollisionWithSwarm((*m_swarmIterator)))
+				{
+					flock.removeBoid((*m_swarmIterator)->GetID());
+					swarmEnemies.erase(m_swarmIterator);
+					(*m_obstacleIterator)->SetAlive(false);
+					cout << swarmEnemies.size() << endl;
+					break;
+				}
+			}
+
+			// Erase obstacles(Will occur after swarm boid collides with obstacle)
+			if ((*m_obstacleIterator)->GetAlive() == false)
+			{
+				obstacles.erase(m_obstacleIterator);
+				break;
+			}
+
+		}// End iterator for obstacles
+
+		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
 
 		window.setView(window.getDefaultView());
 
@@ -146,7 +227,7 @@ int main()
 // Create boids for swarm enemies
 void CreateBoids(int window_width, int window_height)
 {
-	int noOfBoids = 20;
+	int noOfBoids = 15;
 
 	for (int i = 0; i < noOfBoids; i++)
 	{
@@ -160,7 +241,7 @@ void CreateBoids(int window_width, int window_height)
 }
 
 // Update the boids of the swarm enemies
-void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, Vector2f &playerPos, Vector2f &playerVel)
+void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles)
 {
 	// Draw and Update boids
 	for (int i = 0; i < swarmEnemies.size(); i++)
@@ -199,6 +280,7 @@ void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, 
 	if (action == "flock")
 		flock.flocking();// Updates flock
 	else
-		flock.swarming(playerPos, playerVel);// Updates flock
+		flock.swarming(playerPos, playerVel, obstacles);// Updates flock
 }
+
 

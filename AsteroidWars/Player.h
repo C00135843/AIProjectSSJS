@@ -5,6 +5,7 @@
 #include "Bullet.h"
 #include <list>
 #include "SwarmEnemy.h"
+#include "Obstacle.h"
 
 class Player
 {
@@ -23,8 +24,10 @@ public:
 	Vector2f GetVelocity();
 	float mod(float a, float b);
 
-	bool CheckBulletCollision(SwarmEnemy *swarmEnemy);
+	bool CheckBulletSwarmCollision(SwarmEnemy *swarmEnemy);
 	bool CheckSwarmCollision(SwarmEnemy *swarmEnemy);
+	bool CheckObstacleCollision(Obstacle *obstacle);
+	bool CheckBulletObstacleCollision(Obstacle *obstacle);
 
 	int GetHealth();
 	void SetHealth(int myHealth);

@@ -175,7 +175,7 @@ list<Bullet*> Player::GetBullets()
 	return m_bullets;
 }
 
-bool Player::CheckBulletCollision(SwarmEnemy *swarmEnemy)
+bool Player::CheckBulletSwarmCollision(SwarmEnemy *swarmEnemy)
 {
 	if (m_bullets.size() > 0)
 	{
@@ -196,8 +196,33 @@ bool Player::CheckSwarmCollision(SwarmEnemy *swarmEnemy)
 {
 	if (m_playerSprite.getGlobalBounds().intersects(swarmEnemy->GetSprite().getGlobalBounds()))
 	{
-		cout << "True" << endl;
 		return true;
+	}
+	return false;
+}
+
+bool Player::CheckObstacleCollision(Obstacle *obstacle)
+{
+	if (m_playerSprite.getGlobalBounds().intersects(obstacle->GetSprite().getGlobalBounds()))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
+{
+	if (m_bullets.size() > 0)
+	{
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if (obstacle->GetSprite().getGlobalBounds().intersects((*m_bulletIterator)->GetSprite().getGlobalBounds()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
 	}
 	return false;
 }

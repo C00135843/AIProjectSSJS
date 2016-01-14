@@ -2,6 +2,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <iostream>
+#include "Obstacle.h"
 
 using namespace std;
 
@@ -48,6 +49,8 @@ public:
 	int timer;
 	bool tendTowardsPlayer;
 
+	bool m_avoid;
+
 	Boid() {} // Default constructor
 
 	// Used constructor
@@ -55,6 +58,7 @@ public:
 	{
 		SetInRange(false);
 		SetID(id);
+		SetAvoid(false);
 
 		acceleration = Pvector(0, 0);
 		velocity = Pvector( rand()%3-2, rand()%3-2 ); // Allows for range of -2 -> 2
@@ -101,10 +105,15 @@ public:
 	void update(Pvector v);
 	void flock(vector <Boid> v);
 	float angle(Pvector v);
-	void swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel);
+	void swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> obstacles);
 
 	Pvector seekPlayer(Pvector v);
 	Pvector pursuePlayer(Pvector pos, Pvector vel);
+	Pvector avoid(Pvector obstaclePos, Pvector obstacleVel);
+	void Distance(Vector2f obstaclePos);
+
+	bool Avoid();
+	void SetAvoid(bool myAvoid);
 };
 
 #endif
