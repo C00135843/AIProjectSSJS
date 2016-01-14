@@ -31,7 +31,7 @@ void Factories::LoadAsset()
 }
 void Factories::Update()
 {
-	Wander();
+	//Wander();
 	m_factorySprite.setPosition(m_position);
 }
 void Factories::Wander()
