@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "Scene.h"
+#include "Factories.h"
 
 
 int main()
@@ -17,9 +18,10 @@ int main()
 
 	// Window frame rate
 	window.setFramerateLimit(60);
-
+	srand(time(NULL));
 	// Class instances
 	Player player(windowWidth, windowHeight);
+	Factories factory(200, 200);//for test purposes
 	Scene scene(windowWidth, windowHeight);
 
 	// Start game loop 
@@ -43,10 +45,12 @@ int main()
 
 		// Update
 		player.Update();
-
+		factory.Update();
+		
 		// Draw
 		scene.Draw(window);
 		player.Draw(window);
+		factory.Draw(window);
 
 		// Finally, display rendered frame on screen 
 		window.display();

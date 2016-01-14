@@ -36,12 +36,17 @@ void Factories::Update()
 }
 void Factories::Wander()
 {
+
+	/*Change this to a seek with a view cone
+	/ if the factory get to seek target get new target within view seek
+	*/
 	// *3.14159265 / 180
+	// get random number between -1 and 1
 	float LO = -1,HI=1;
 	float r = LO + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (HI - LO)));
 	wanderOrientation += r * wanderRate;
+	//get target orientation
 	float targetOrientation = wanderOrientation + m_factorySprite.getRotation();
-	
 	
 	Vector2f myOrientVector = Vector2f((float)sin(m_factorySprite.getRotation()*3.14159265 / 180), -(float)cos(m_factorySprite.getRotation()*3.14159265 / 180));
 	Vector2f targetOrientVector = Vector2f((float)sin(targetOrientation*3.14159265 / 180), -(float)cos(targetOrientation*3.14159265 / 180));

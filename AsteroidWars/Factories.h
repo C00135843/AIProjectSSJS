@@ -23,10 +23,10 @@ private:
 	float m_rotationSpeed;
 
 	//variables for wandering
-	float wanderOffset = 1200.f;
-	float wanderRadius = 600.f;
-	float wanderRate = 5.f;
-	float wanderOrientation = 1000.f;
+	float wanderOffset = 600.f;
+	float wanderRadius = 1600.f;
+	float wanderRate = 35.f;
+	float wanderOrientation = 100.f;
 	float maxAcc = 1.f;
 
 };
