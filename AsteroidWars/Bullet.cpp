@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Bullet.h"
 
-Bullet::Bullet(Vector2f pos, Vector2f vel)
+Bullet::Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 {
 	// Load main menu background image
 	m_texture.loadFromFile("Pics/Bullet.png");
@@ -19,8 +19,10 @@ Bullet::Bullet(Vector2f pos, Vector2f vel)
 	m_sprite.setPosition(m_position);
 
 	// Window dimensions
-	m_windowWidth = 800;
-	m_windowHeight = 600;
+	m_windowWidth = windowWidth;
+	m_windowHeight = windowHeight;
+	m_fullWidth = fullWidth;
+	m_fullHeight = fullHeight;
 }
 
 void Bullet::Update()
@@ -29,17 +31,25 @@ void Bullet::Update()
 	m_sprite.setPosition(m_position);
 }
 
-bool Bullet::OutOfBounds()
+bool Bullet::OutOfBounds(Vector2f playerPos)
 {
-	if (m_position.x >= m_windowWidth || m_position.x <= 0
-		|| m_position.y >= m_windowHeight || m_position.y <= 0)
+	if (DistanceFromPlayer(playerPos) > m_windowWidth)
 	{
-		return true;
+	return true;
 	}
 	else
 	{
-		return false;
+	return false;
 	}
+}
+
+float Bullet::DistanceFromPlayer(Vector2f playerPos)
+{
+	float distance;
+
+	distance = sqrt(((m_position.x - playerPos.x)*(m_position.x - playerPos.x)) + ((m_position.y - playerPos.y)*(m_position.y - playerPos.y)));
+
+	return distance;
 }
 
 void Bullet::Draw(RenderWindow &window)
