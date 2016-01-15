@@ -1,21 +1,23 @@
 #include "stdafx.h"
 #include "Factories.h"
 
-Factories::Factories(float x, float y) :m_Position(x,y)
+Factories::Factories(int x, int y) 
 {
+	m_Position.x = rand() % x + 1;
+	m_Position.y = rand() % y + 1;
 	LoadAsset();
 	acceleration = Pvector(0, 0);
 	location = Pvector(m_Position.x, m_Position.y);
 	//m_speed = 200;
 	m_maxSpeed = 5.0;
 	//rotationSpeed = 150;
-	m_acceleration = 0;
 	orientation = 0;
 	angleBetween = 0;
 	m_maxForce = 0.5;
 	acceleration = Pvector(0, 0);
-	m_Direction = sf::Vector2f(1, 0);
 	velocity = Pvector(rand() % 3 - 2, rand() % 3 - 2); // Allows for range of -2 -> 2
+	health = 4;
+	alive = true;
 }
 void Factories::LoadAsset()
 {
@@ -30,7 +32,7 @@ void Factories::LoadAsset()
 	m_factorySprite.rotate(m_rotation);
 	//set Position
 	m_factorySprite.setPosition(m_Position);
-	//set Speed and Velocity
+
 
 
 }
@@ -44,7 +46,7 @@ void Factories::Update(Player* p,int w,int h)
 	Pvector fPos(m_Position.x, m_Position.y);
 	Pvector pPos(p->GetPosition().x, p->GetPosition().y);
 
-	if (fPos.distance(pPos) < 200)
+	if (fPos.distance(pPos) < 200) // if the factory gets in range of the player evade
 	{
 		//Avoid(p->GetPosition());
 		applyForce(flee(p->GetPosition()));
@@ -63,23 +65,24 @@ void Factories::Update(Player* p,int w,int h)
 
 
 	}
-	else
+	else // wander 
 	{
-		//applyForce(Wander(w,h));
+		//Pvector wanderVel = Wander(w, h,pPos);
+		//applyForce(wanderVel);
+		acceleration.mulScalar(.4); // NI
+
+		// Update velocity
+		velocity.addVector(acceleration);
+
+		// Limit speed
+		velocity.limit(m_maxSpeed-1.0f);// NI
+		location.addVector(velocity);// // NI Updates position
+
+		// Reset accelertion to 0 each cycle
+		acceleration.mulScalar(0);// NI
+
 	}
-
-	acceleration.mulScalar(.4); // NI
-
-	// Update velocity
-	velocity.addVector(acceleration);
-
-	// Limit speed
-	velocity.limit(m_maxSpeed);// NI
-	location.addVector(velocity);// // NI Updates position
-
-	// Reset accelertion to 0 each cycle
-	acceleration.mulScalar(0);// NI
-
+	
 	m_Position = sf::Vector2f(location.x, location.y);
 	float a = angle(velocity);
 	m_factorySprite.setRotation(a);
@@ -91,31 +94,27 @@ float Factories::angle(Pvector v)
 	float angle = (float)(atan2(v.x, -v.y) * 180 / PI);
 	return angle;
 }
-Pvector Factories::Wander(int w, int h)
+Pvector Factories::Wander(int w, int h,Pvector p)
 {
-	//time 2 sec passed
-	Vector2f factPosition(300, 300);
-	count++;
-	if (count >= 120)
+	if (count == 0)
+	{		
+		wtarget.x = rand() % w + 1;
+		wtarget.y = rand() % h + 1;
+	}
+	else if (count >= 60)
 	{
-		Vector2f factPosition;
-		factPosition.x = rand() % w + 1;
-		factPosition.y = rand() % h + 1;
+		wtarget.x = rand() % w + 1;
+		wtarget.y = rand() % h + 1;
 		count = 1;
 	}
-	else if (count == 0)
-		Vector2f factPosition(300, 300);
 
-	Pvector targetForce(flee(factPosition));
-	targetForce.x = -targetForce.x;
-	targetForce.y = -targetForce.y;
+	count++;
+	Pvector targetForce(seek(wtarget));
 	return targetForce;
 }
 
 
 Pvector Factories::flee(sf::Vector2f t){
-
-
 	Pvector desired_velocity;
 	Pvector steering;
 	Pvector normVel(m_Position.x - t.x,m_Position.y-t.y);
@@ -258,17 +257,19 @@ Pvector Factories::Cohesion(list<Factories*>* v)
 }
 // Seek function limits the maxSpeed, finds necessary steering force and
 // normalizes the vectors.
-Pvector Factories::seek(Pvector v)
+Pvector Factories::seek(Pvector t)
 {
-	Pvector desired;
-	desired.subVector(v);  // A vector pointing from the location to the target
-	// Normalize desired and scale to maximum speed
-	desired.normalize();
-	desired.mulScalar(m_maxSpeed);
-	// Steering = Desired minus Velocity
-	acceleration.subTwoVector(desired, velocity);
-	acceleration.limit(m_maxForce);  // Limit to maximum steering force
-	return acceleration;
+	Pvector desired_velocity;
+	Pvector steering;
+	Pvector normVel(t.x - m_Position.x, t.y- m_Position.y);
+	normVel.normalize();
+
+	desired_velocity.x = normVel.x * m_maxSpeed;
+	desired_velocity.y = normVel.y * m_maxSpeed;
+
+	steering = steering.subTwoVector(desired_velocity, velocity);
+	steering.limit(m_maxForce);
+	return steering;
 }
 void Factories::Draw(RenderWindow &win)
 {

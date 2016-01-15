@@ -17,8 +17,11 @@
 string action = "swarm";
 Flock flock;
 vector<SwarmEnemy*> swarmEnemies;
+vector<Factories*> factEnemies;
 
 void CreateBoids(int, int);
+void CreateFact(int, int);
+void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h);
 void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
 
 int main()
@@ -49,9 +52,12 @@ int main()
 	sf::Time timeSinceLastUpdate;
 	// Class instances
 	Player player(windowWidth, windowHeight, fullWidth, fullHeight);
-	Factories factory(200, 200);//for test purposes
+	//Factories factory(200, 200);//for test purposes
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
+	vector<Factories*>::iterator m_factIterator;
+
+	CreateFact(windowWidth, windowHeight);
 
 	// Create boids
 	CreateBoids(windowWidth, windowHeight);
@@ -124,7 +130,7 @@ int main()
 
 		// Update & Draw
 		player.Update();
-		factory.Update(&player,fullWidth,fullHeight);
+		//factory.Update(&player,fullWidth,fullHeight);
 		
 		// Draw
 		flock.GetDisanceFromPlayer(player.GetPosition());
@@ -161,7 +167,7 @@ int main()
 
 		scene.Draw(window);
 		player.Draw(window);
-		factory.Draw(window);
+		//factory.Draw(window);
 
 		// Update/Draw obstacles
 		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
@@ -218,7 +224,7 @@ int main()
 		}
 
 		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
-
+		UpdateFact(window,&player,windowWidth,windowHeight);
 		window.setView(window.getDefaultView());
 
 		// Finally, display rendered frame on screen 
@@ -243,7 +249,26 @@ void CreateBoids(int window_width, int window_height)
 		swarmEnemies.push_back(swarmEnemy);
 	}
 }
+void CreateFact(int window_width, int window_height)
+{
+	int noOffact = 5;
 
+	for (int i = 0; i < noOffact; i++)
+	{
+		Factories* f = new Factories(window_width, window_height);// Create factory
+		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
+		//flock.addBoid(b, i);
+		factEnemies.push_back(f);
+	}
+}
+void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h)
+{
+	for (int i = 0; i < factEnemies.size(); i++)
+	{
+		factEnemies[i]->Update(p, w*9, h*9);
+		factEnemies[i]->Draw(window);
+	}
+}
 // Update the boids of the swarm enemies
 void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles)
 {

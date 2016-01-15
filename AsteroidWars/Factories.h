@@ -11,7 +11,7 @@ using namespace std;
 class Factories
 {
 public:
-	Factories(float x, float y);
+	Factories(int x, int y);
 	~Factories()
 	{
 		cout << "Deleteing Factory" << endl;
@@ -20,6 +20,9 @@ public:
 	void SetPosition(sf::Vector2f pos);
 	void SetDirection(sf::Vector2f dir);
 	sf::Vector2f  GetPosition();
+	bool checkifDead(){ if (health <= 0){ alive = false; } }
+	bool getAlive(){ return alive; }
+	void DecreaseHealth(){ health--; }
 	
 	
 	void Update(Player* p,int w,int h);
@@ -33,10 +36,8 @@ public:
 private:
 	Vector2f m_Position;
 	Vector2f m_Direction;
-	float m_speed;
-	float m_acceleration;
 
-
+	Pvector wtarget;
 	Vector2f m_velocity;
 	Texture m_factoryTexture;
 	Sprite m_factorySprite;
@@ -52,7 +53,7 @@ private:
 	float angleBetween;
 
 	Pvector flee(sf::Vector2f target); //flee from player
-	void Rotate(float t);
+
 	void applyForce(Pvector force);
 
 	void flock(list<Factories*>* v);
@@ -62,8 +63,12 @@ private:
 	float count = 0;
 	void updateflocking(float time);
 	Pvector seek(Pvector v);
-	Pvector Wander(int,int);
+	Pvector Wander(int,int,Pvector);
 	float angle(Pvector v);
+
+	float health;
+	float alive;
+
 };
 
 
