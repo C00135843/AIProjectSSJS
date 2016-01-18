@@ -14,7 +14,7 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_playerTexture.loadFromFile("Pics/PlayerSpaceship.png");
 	m_playerSprite = sf::Sprite(m_playerTexture);
 
-	m_squareTexture.loadFromFile("Pics/Square.png");
+	m_squareTexture.loadFromFile("Pics/Green.png");
 	m_squareSprite = sf::Sprite(m_squareTexture);
 
 	// Set position
@@ -28,8 +28,8 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 
 	// Set origin
 	m_playerSprite.setOrigin(
-		m_position.x - 10,
-		m_position.y + 10
+		m_playerSprite.getScale().x / 2.0f + (m_playerSprite.getGlobalBounds().width / 2),
+		m_playerSprite.getScale().y / 2.0f + (m_playerSprite.getGlobalBounds().height / 2)
 		);
 
 	// Scale
@@ -148,6 +148,15 @@ void Player::Draw(RenderWindow &window)
 		{
 			bullet->Draw(window);
 		}
+	}
+}
+
+void Player::DrawOnRadar(RenderWindow &window)
+{
+	if (m_alive)
+	{
+		m_squareSprite.setPosition(GetPosition());
+		window.draw(m_squareSprite);
 	}
 }
 

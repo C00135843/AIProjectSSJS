@@ -8,9 +8,9 @@
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
 
-#include <stdio.h>      /* printf, scanf, puts, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 // For Boids
 string action = "swarm";
@@ -22,25 +22,30 @@ void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector
 
 int main()
 {
-	/* initialize random seed: */
+	// initialize random seed: 
 	srand(time(NULL));
 
 	// Render window width and height
-	int windowWidth = 800;
-	int windowHeight = 600;
+	VideoMode desktop = VideoMode::getDesktopMode();
+	int windowWidth = desktop.width;
+	int windowHeight = desktop.height;
 
 	// Full screen width and height
 	int fullWidth = windowWidth * 9;
 	int fullHeight = windowHeight * 9;
 
 	// Create the main window 
-	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight, 32), "SFML First Program");
+	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight, 32), "Asteroid Wars!!!");
 
 	// Create a view
 	View view;
 	view.reset(FloatRect(0, 0, windowWidth, windowHeight));
 	view.setViewport(FloatRect(0, 0, 1.0f, 1.0f));
 	Vector2f camPosition(windowWidth / 2, windowHeight / 2);
+
+	// Create radar view
+	View radarView;
+	radarView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
 
 	// Window frame rate
 	window.setFramerateLimit(60);
@@ -111,7 +116,11 @@ int main()
 
 		#pragma endregion
 
+		radarView.reset(FloatRect(camPosition.x, camPosition.y, windowWidth, windowHeight));
+		
+		//window.setView(radarView);
 
+		// Modify view
 		view.reset(FloatRect(camPosition.x, camPosition.y, windowWidth, windowHeight));
 
 		window.setView(view);
@@ -153,6 +162,10 @@ int main()
 		scene.Draw(window);
 		player.Draw(window);
 
+		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+
+		#pragma region Obstacles
+
 		// Update/Draw obstacles
 		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
 		{
@@ -180,7 +193,7 @@ int main()
 			// Get distance from a swarm boid to a obstacle *****************
 			//flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition());
 
-			if ( flock.InRangeOfObstacle( (*m_obstacleIterator)->GetPosition() ) )
+			if (flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition()))
 			{
 				(*m_obstacleIterator)->setInRangeOfBoid(true);
 				//cout << "obstacle in range" << endl;
@@ -211,9 +224,26 @@ int main()
 				break;
 			}
 
-		}// End iterator for obstacles
+		}// End iterator for obstacles 
 
-		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+
+#pragma endregion
+
+		window.setView(radarView);
+
+		scene.DrawOnRadar(window);
+		player.DrawOnRadar(window);
+
+		// Update/Draw obstacles
+		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
+		{
+			(*m_obstacleIterator)->DrawOnRadar(window);
+		}
+
+		for (int i = 0; i < swarmEnemies.size(); i++)
+		{
+			swarmEnemies[i]->DrawOnRadar(window);
+		}
 
 		window.setView(window.getDefaultView());
 

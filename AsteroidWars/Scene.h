@@ -10,9 +10,13 @@ public:
 
 	void Update();
 	void Draw(RenderWindow &window);
+	void DrawOnRadar(RenderWindow &window);
 private:
 	Texture m_backgroundTexture;
 	Sprite m_backgroundSprite;
+
+	Texture m_backgroundTextureRadar;
+	Sprite m_backgroundSpriteRadar;
 };
 
 #endif

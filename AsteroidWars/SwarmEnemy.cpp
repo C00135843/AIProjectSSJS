@@ -9,6 +9,10 @@ SwarmEnemy::SwarmEnemy(int id)
 	m_texture.loadFromFile("Pics/SwarmBoid.png");
 	m_sprite = sf::Sprite(m_texture);
 
+	// Radar
+	m_radarTexture.loadFromFile("Pics/SwarmBoidRadar.png");
+	m_radarSprite = sf::Sprite(m_radarTexture);
+
 	// Scale
 	m_sprite.setScale(0.9f, 0.9f);
 }
@@ -16,6 +20,12 @@ SwarmEnemy::SwarmEnemy(int id)
 void SwarmEnemy::Draw(sf::RenderWindow &window)
 {
 	window.draw(m_sprite);
+}
+
+void SwarmEnemy::DrawOnRadar(sf::RenderWindow &window)
+{
+	m_radarSprite.setPosition(m_sprite.getPosition());
+	window.draw(m_radarSprite);
 }
 
 void SwarmEnemy::SetPosition(int x, int y)

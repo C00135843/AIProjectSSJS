@@ -13,6 +13,9 @@ private:
 	Sprite m_sprite;
 	Texture m_texture;
 
+	Texture m_radarTexture;
+	Sprite m_radarSprite;
+
 	int m_fullWidth;
 	int m_fullHeight;
 
@@ -25,6 +28,7 @@ public:
 	Obstacle(float xPos, float yPos, float angle, int fullWidth, int fullHeight);
 
 	void Draw(RenderWindow &window);
+	void DrawOnRadar(RenderWindow &window);
 	void Update();
 
 	bool CollisionWithSwarm(SwarmEnemy *swarmEnemy);

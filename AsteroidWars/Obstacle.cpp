@@ -28,6 +28,10 @@ Obstacle::Obstacle(float xPos, float yPos, float angle, int fullWidth, int fullH
 	m_texture.loadFromFile("Pics/Asteroid.png");
 	m_sprite = sf::Sprite(m_texture);
 
+	// Radar
+	m_radarTexture.loadFromFile("Pics/Yellow.png");
+	m_radarSprite = sf::Sprite(m_radarTexture);
+
 	m_position.x = xPos;
 	m_position.y = yPos;
 
@@ -52,6 +56,15 @@ void Obstacle::Draw(RenderWindow &window)
 {
 	if (m_alive)
 		window.draw(m_sprite);
+}
+
+void Obstacle::DrawOnRadar(RenderWindow &window)
+{
+	if (m_alive)
+	{
+		m_radarSprite.setPosition(m_sprite.getPosition());
+		window.draw(m_radarSprite);
+	}
 }
 
 void Obstacle::Update()

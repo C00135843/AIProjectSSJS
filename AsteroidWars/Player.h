@@ -14,6 +14,7 @@ public:
 
 	void Update();
 	void Draw(RenderWindow &window);
+	void DrawOnRadar(RenderWindow &window);
 
 	void Shoot();
 
