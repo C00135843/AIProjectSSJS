@@ -175,19 +175,6 @@ Pvector Boid::seek(Pvector v)
 //are given by the three laws.
 void Boid::update(Pvector v)
 {
-	/*timer++;
-	cout << timer << endl;
-	if (timer >= timeToTend)
-	{
-		timer = 0;
-		tendTowardsPlayer = true;
-	}
-	else
-	{
-		tendTowardsPlayer = false;
-	}*/
-
-
 	//To make the slow down not as abrupt
 	acceleration.mulScalar(.4); // NI
 
@@ -256,43 +243,30 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector
 	seekVector.x = 0;
 	seekVector.y = 0;
 
-	//if (!Avoid())
-	//{
-		if (!InRange())
-			seekVector = seekPlayer(playerPosVector);
-		else
-			seekVector = pursuePlayer(playerPosVector, playerVelVector);
-	//}
+	if (!InRange())
+		seekVector = seekPlayer(playerPosVector);
+	else
+		seekVector = pursuePlayer(playerPosVector, playerVelVector);
 
 	Pvector avoidVector;
 	avoidVector.x = 0;
 	avoidVector.y = 0;
 
-	//if (Avoid())
-	//{
-		for each(Obstacle* obstacle in obstacles)
+	for each(Obstacle* obstacle in obstacles)
+	{
+		if (obstacle->getInRangeOfBoid())
 		{
-			if (obstacle->getInRangeOfBoid())
-			{
-				//cout << "Here>>>>>>>" << endl;
+			Pvector obstaclePos;
+			obstaclePos.x = obstacle->GetPosition().x;
+			obstaclePos.y = obstacle->GetPosition().y;
 
-				Pvector obstaclePos;
-				obstaclePos.x = obstacle->GetPosition().x;
-				obstaclePos.y = obstacle->GetPosition().y;
+			Pvector obstalceVel;
+			obstalceVel.x = obstacle->GetVelocity().x;
+			obstalceVel.y = obstacle->GetVelocity().y;
 
-				Pvector obstalceVel;
-				obstalceVel.x = obstacle->GetVelocity().x;
-				obstalceVel.y = obstacle->GetVelocity().y;
-
- 				avoidVector = avoid(obstaclePos, obstalceVel);
-
-				//////////////////
-
-				//velocity.x = location.x - obstaclePos.x;
-				//velocity.y = location.y - obstaclePos.y;
-			}
+ 			avoidVector = avoid(obstaclePos, obstalceVel);
 		}
-	//}
+	}
 
 	Pvector	R;// 'R' is distance between current boid and boid being looked at in for loop
 	Pvector sum(0, 0);
@@ -404,48 +378,6 @@ Pvector Boid::pursuePlayer(Pvector pos, Pvector vel)
 		
 }
 
-//Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
-//{
-//	// Get distance between two
-//	Pvector Dp;
-//	Dp.x = obstalcePos.x - location.x;
-//	Dp.y = obstalcePos.y - location.y;
-//
-//	// Get relative velocity between two
-//	Pvector Dv;
-//	Dv.x = obstacleVel.x - velocity.x;
-//	Dv.y = obstacleVel.y - velocity.y;
-//
-//	// t = dp.dv / | dv | 2
-//	float time;
-//
-//	Pvector posByVel;
-//	Dp.mulVector(Dv);
-//	posByVel = Dp;
-//
-//	Pvector lengthOfDv;
-//	Dv.magnitude();
-//	lengthOfDv = Dv;
-//
-//	Pvector lengthOfDvSquared;
-//	lengthOfDvSquared.x = lengthOfDv.x * lengthOfDv.x;
-//	lengthOfDvSquared.y = lengthOfDv.y * lengthOfDv.y;
-//
-//	Pvector timeVector;
-//
-//	posByVel.divVector(lengthOfDvSquared);
-//
-//	timeVector.x = posByVel.x;
-//	timeVector.y = posByVel.y;
-//
-//	Pvector newPos;
-//
-//	newPos.x = location.x + velocity.x * timeVector.x;
-//	newPos.y = location.y + velocity.y * timeVector.y;
-//
-//	return newPos;
-//}
-
 Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
 {
 	Pvector ahead;
@@ -507,24 +439,6 @@ Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
 
 	return steering;
 }
-
-////desired_velocity = normalize(position - target) * max_velocity
-////steering = desired_velocity - velocity
-//
-//Pvector desired_velocity;
-//desired_velocity.x = location.x - obstalcePos.x;
-//desired_velocity.y = location.y - obstalcePos.y;
-//
-//desired_velocity.normalize();
-//desired_velocity.mulScalar(maxSpeed);
-//
-//Pvector steering;
-//steering.x = desired_velocity.x - velocity.x;
-//steering.y = desired_velocity.y - velocity.y;
-//
-//steering.limit(maxForce);
-//
-//return steering;
 
 void Boid::Distance(Vector2f obstaclePos)
 {

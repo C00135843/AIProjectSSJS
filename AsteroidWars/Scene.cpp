@@ -11,6 +11,10 @@ Scene::Scene(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_backgroundTextureRadar.loadFromFile("Pics/Black.png");
 	m_backgroundSpriteRadar = sf::Sprite(m_backgroundTextureRadar);
 
+	// Load main menu background image
+	m_backgroundTextureRadarOutline.loadFromFile("Pics/Radar.png");
+	m_backgroundSpriteRadarOutline = sf::Sprite(m_backgroundTextureRadarOutline);
+
 	// Scale image to window
 	m_backgroundSprite.setScale(fullWidth / m_backgroundSprite.getLocalBounds().width,
 		fullHeight / m_backgroundSprite.getLocalBounds().height);
@@ -18,6 +22,10 @@ Scene::Scene(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	// Scale image to window
 	m_backgroundSpriteRadar.setScale(fullWidth / m_backgroundSpriteRadar.getLocalBounds().width,
 		fullHeight / m_backgroundSpriteRadar.getLocalBounds().height);
+
+	// Scale image to window
+	m_backgroundSpriteRadarOutline.setScale(fullWidth / m_backgroundSpriteRadarOutline.getLocalBounds().width,
+		fullHeight / m_backgroundSpriteRadarOutline.getLocalBounds().height);
 }
 
 void Scene::Update()
@@ -33,4 +41,9 @@ void Scene::Draw(RenderWindow &window)
 void Scene::DrawOnRadar(RenderWindow &window)
 {
 	window.draw(m_backgroundSpriteRadar);
+}
+
+void Scene::DrawRadarOutline(RenderWindow &window)
+{
+	window.draw(m_backgroundSpriteRadarOutline);
 }

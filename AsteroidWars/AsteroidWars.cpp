@@ -45,7 +45,11 @@ int main()
 
 	// Create radar view
 	View radarView;
-	radarView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
+	radarView.setViewport(sf::FloatRect(0.755f, 0, 0.245f, 0.245f));
+
+	// Create radar outline view
+	View radarOutlineView;
+	radarOutlineView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
 
 	// Window frame rate
 	window.setFramerateLimit(60);
@@ -228,6 +232,10 @@ int main()
 
 
 #pragma endregion
+
+		window.setView(radarOutlineView);
+
+		scene.DrawRadarOutline(window);
 
 		window.setView(radarView);
 
