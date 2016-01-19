@@ -5,6 +5,11 @@ Factories::Factories(int x, int y)
 {
 	m_Position.x = rand() % x + 1;
 	m_Position.y = rand() % y + 1;
+	//m_Position.x = 500;
+	//m_Position.y = 300;
+	SCREEN_WIDTH = x * 9;
+	SCREEN_HEIGHT = y * 9;
+	wander = true;
 	LoadAsset();
 	acceleration = Pvector(0, 0);
 	location = Pvector(m_Position.x, m_Position.y);
@@ -18,6 +23,7 @@ Factories::Factories(int x, int y)
 	velocity = Pvector(rand() % 3 - 2, rand() % 3 - 2); // Allows for range of -2 -> 2
 	health = 4;
 	alive = true;
+	flocker = false;
 }
 void Factories::LoadAsset()
 {
@@ -36,77 +42,78 @@ void Factories::LoadAsset()
 
 
 }
+float Factories::mod(float a, float b)
+{
+
+		float thing = a - b * floor(a / b);
+		return a - b * floor(a / b);
+
+}
 void Factories::applyForce(Pvector force)
 {
 	acceleration.addVector(force);
 }
 
-void Factories::Update(Player* p,int w,int h)
+void Factories::Update(Player* p, int w, int h, vector<Factories*>* v, Pvector flockPos)
 {
 	Pvector fPos(m_Position.x, m_Position.y);
 	Pvector pPos(p->GetPosition().x, p->GetPosition().y);
 
 	if (fPos.distance(pPos) < 200) // if the factory gets in range of the player evade
 	{
-		//Avoid(p->GetPosition());
 		applyForce(flee(p->GetPosition()));
-		//To make the slow down not as abrupt
-		acceleration.mulScalar(.4); // NI
-
-		// Update velocity
-		velocity.addVector(acceleration);
-
-		// Limit speed
-		velocity.limit(m_maxSpeed);// NI
-		location.addVector(velocity);// // NI Updates position
-
-		// Reset accelertion to 0 each cycle
-		acceleration.mulScalar(0);// NI
-
 
 	}
-	else // wander 
+	else // wander or flock
 	{
-		//Pvector wanderVel = Wander(w, h,pPos);
-		//applyForce(wanderVel);
-		acceleration.mulScalar(.4); // NI
+		if (wander)
+		{
+			Pvector wanderVel = Wander(w, h, flockPos);
+			applyForce(wanderVel);
+		}
+		else{
 
-		// Update velocity
-		velocity.addVector(acceleration);
-
-		// Limit speed
-		velocity.limit(m_maxSpeed-1.0f);// NI
-		location.addVector(velocity);// // NI Updates position
-
-		// Reset accelertion to 0 each cycle
-		acceleration.mulScalar(0);// NI
+			flock(v);
+		}
 
 	}
-	
+	acceleration.mulScalar(.4); // NI
+	// Update velocity
+	velocity.addVector(acceleration);
+	// Limit speed
+	velocity.limit(m_maxSpeed);// NI
+	location.addVector(velocity);// // NI Updates position
+	// Reset accelertion to 0 each cycle
+	acceleration.mulScalar(0);// NI
+	//Boundary();
 	m_Position = sf::Vector2f(location.x, location.y);
+	m_Position = Vector2f(mod(m_Position.x,w), mod(m_Position.y,h));
 	float a = angle(velocity);
 	m_factorySprite.setRotation(a);
 	m_factorySprite.setPosition(m_Position);
 }
+
 float Factories::angle(Pvector v)
 {
 	// From the definition of the dot product
 	float angle = (float)(atan2(v.x, -v.y) * 180 / PI);
 	return angle;
 }
+
 Pvector Factories::Wander(int w, int h,Pvector p)
 {
-	if (count == 0)
-	{		
-		wtarget.x = rand() % w + 1;
-		wtarget.y = rand() % h + 1;
-	}
-	else if (count >= 60)
-	{
-		wtarget.x = rand() % w + 1;
-		wtarget.y = rand() % h + 1;
-		count = 1;
-	}
+	
+		if (count == 0)
+		{
+			wtarget.x = rand() % w + 1;
+			wtarget.y = rand() % h + 1;
+		}
+		else if (count >= 60)
+		{
+			wtarget.x = rand() % w + 1;
+			wtarget.y = rand() % h + 1;
+			count = 1;
+		}
 
 	count++;
 	Pvector targetForce(seek(wtarget));
@@ -128,7 +135,7 @@ Pvector Factories::flee(sf::Vector2f t){
 	return steering;
 }
 
-void Factories::flock(list<Factories*>* v)
+void Factories::flock(vector<Factories*>* v)
 {
 	Pvector sep = Separation(v);
 	Pvector ali = Alignment(v);
@@ -144,6 +151,7 @@ void Factories::flock(list<Factories*>* v)
 }
 void Factories::updateflocking(float time)
 {
+
 	//To make the slow down not as abrupt
 	acceleration.mulScalar(.4);
 	// Update velocity
@@ -154,13 +162,13 @@ void Factories::updateflocking(float time)
 	// Reset accelertion to 0 each cycle
 	acceleration.mulScalar(0);
 }
-Pvector Factories::Separation(list<Factories*>* v)
+Pvector Factories::Separation(vector<Factories*>* v)
 {
 	// If the boid we're looking at is a predator, do not run the separation
 	// algorithm
 
 	// Distance of field of vision for separation between boids
-	float desiredseparation = 105;
+	float desiredseparation = 50;
 
 	Pvector steer(0, 0);
 	int count = 0;
@@ -196,9 +204,9 @@ Pvector Factories::Separation(list<Factories*>* v)
 // Alignment calculates the average velocity in the field of view and 
 // manipulates the velocity of the Boid passed as parameter to adjust to that
 // of nearby factories.
-Pvector Factories::Alignment(list<Factories*>* v)
+Pvector Factories::Alignment(vector<Factories*>* v)
 {
-	float neighbordist = 200;
+	float neighbordist = 100;
 
 	Pvector sum(0, 0);
 	int count = 0;
@@ -230,9 +238,9 @@ Pvector Factories::Alignment(list<Factories*>* v)
 }
 // Cohesion finds the average location of nearby factories and manipulates the 
 // steering force to move in that direction.
-Pvector Factories::Cohesion(list<Factories*>* v)
+Pvector Factories::Cohesion(vector<Factories*>* v)
 {
-	float neighbordist = 200;
+	float neighbordist = 100;
 
 	Pvector sum(0, 0);
 	int count = 0;
@@ -248,12 +256,24 @@ Pvector Factories::Cohesion(list<Factories*>* v)
 	if (count > 0)
 	{
 		sum.divScalar(count);
-		return seek(sum);
+		return flockSeek(sum);
 	}
 	else {
 		Pvector temp(0, 0);
 		return temp;
 	}
+}
+Pvector Factories::flockSeek(Pvector v)
+{
+	Pvector desired;
+	desired.subVector(v);  // A vector pointing from the location to the target
+	// Normalize desired and scale to maximum speed
+	desired.normalize();
+	desired.mulScalar(m_maxSpeed);
+	// Steering = Desired minus Velocity
+	acceleration.subTwoVector(desired, velocity);
+	acceleration.limit(m_maxForce);  // Limit to maximum steering force
+	return acceleration;
 }
 // Seek function limits the maxSpeed, finds necessary steering force and
 // normalizes the vectors.

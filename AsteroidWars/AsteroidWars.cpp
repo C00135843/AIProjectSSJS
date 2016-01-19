@@ -18,11 +18,16 @@ string action = "swarm";
 Flock flock;
 vector<SwarmEnemy*> swarmEnemies;
 vector<Factories*> factEnemies;
+//vector<Factories*>* flockers;
 
 void CreateBoids(int, int);
 void CreateFact(int, int);
 void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h);
 void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+
+int flockcount = 0;
+Pvector flockWanderPos;
+vector<bool> IsInFlock;
 
 int main()
 {
@@ -169,6 +174,8 @@ int main()
 		player.Draw(window);
 		//factory.Draw(window);
 
+		#pragma region Obstacles
+
 		// Update/Draw obstacles
 		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
 		{
@@ -188,7 +195,7 @@ int main()
 				obstacles.erase(m_obstacleIterator);
 
 				// Collision with an obstacle results in death!
-				player.SetHealth(player.GetHealth() - 100);
+				//player.SetHealth(player.GetHealth() - 100);
 				break;
 			}
 
@@ -215,7 +222,10 @@ int main()
 				break;
 			}
 
-		}// End iterator for obstacles
+		}// End iterator for obstacles 
+
+		#pragma endregion
+
 
 		// Create new obstacles
 		if (obstacles.size() < 100)
@@ -251,11 +261,11 @@ void CreateBoids(int window_width, int window_height)
 }
 void CreateFact(int window_width, int window_height)
 {
-	int noOffact = 5;
+	int noOffact = 50;
 
 	for (int i = 0; i < noOffact; i++)
 	{
-		Factories* f = new Factories(window_width, window_height);// Create factory
+		Factories* f = new Factories(window_width*9, window_height*9);// Create factory
 		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
 		//flock.addBoid(b, i);
 		factEnemies.push_back(f);
@@ -263,11 +273,32 @@ void CreateFact(int window_width, int window_height)
 }
 void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h)
 {
+	//check for flocking
 	for (int i = 0; i < factEnemies.size(); i++)
 	{
-		factEnemies[i]->Update(p, w*9, h*9);
-		factEnemies[i]->Draw(window);
+		Pvector fPos(factEnemies[i]->GetPosition().x, factEnemies[i]->GetPosition().y); // inner fact
+		for (int j = 0; j < factEnemies.size(); j++)
+		{
+			if (j != i)
+			{
+				Pvector pPos(factEnemies[j]->GetPosition().x, factEnemies[j]->GetPosition().y); //outer fact
+
+				if (fPos.distance(pPos) < 100)
+				{
+					factEnemies[i]->setWander(false);
+					factEnemies[j]->setWander(false);
+				}
+
+			}
+		}
+		if (factEnemies[i]->getAlive() == true)
+		{
+			factEnemies[i]->Update(p, w * 9, h * 9, &factEnemies, Pvector(0, 0));
+			factEnemies[i]->Draw(window);
+		}
 	}
+
+
 }
 // Update the boids of the swarm enemies
 void UpdateBoids(sf::RenderWindow &window, int window_width, int window_height, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles)

@@ -19,19 +19,20 @@ public:
 	void LoadAsset();
 	void SetPosition(sf::Vector2f pos);
 	void SetDirection(sf::Vector2f dir);
-	sf::Vector2f  GetPosition();
+	sf::Vector2f  GetPosition(){ return m_Position; };
 	bool checkifDead(){ if (health <= 0){ alive = false; } }
 	bool getAlive(){ return alive; }
 	void DecreaseHealth(){ health--; }
+	void flock(vector<Factories*>* v);
 	
-	
-	void Update(Player* p,int w,int h);
+	void Update(Player* p, int w, int h, vector<Factories*>* v, Pvector flockPos);
 	void Draw(RenderWindow &window);
 	Pvector location;
 	Pvector velocity;
 	Pvector acceleration;
-
+	void setFlocker(bool f){ flocker = f; }
 	bool IsAlive();
+	void setWander(bool w){ wander = w; }
 
 private:
 	Vector2f m_Position;
@@ -41,6 +42,11 @@ private:
 	Vector2f m_velocity;
 	Texture m_factoryTexture;
 	Sprite m_factorySprite;
+
+	vector<Factories*>* factoriesInFlock;
+
+	float SCREEN_WIDTH;
+	float SCREEN_HEIGHT;
 
 	float m_maxSpeed;
 	float m_maxForce;
@@ -55,17 +61,19 @@ private:
 	Pvector flee(sf::Vector2f target); //flee from player
 
 	void applyForce(Pvector force);
+	float mod(float, float);
 
-	void flock(list<Factories*>* v);
-	Pvector Separation(list<Factories*>* v);
-	Pvector Alignment(list<Factories*>* v);
-	Pvector Cohesion(list<Factories*>* v);
+	bool wander;
+	Pvector Separation(vector<Factories*>* v);
+	Pvector Alignment(vector<Factories*>* v);
+	Pvector Cohesion(vector<Factories*>* v);
 	float count = 0;
 	void updateflocking(float time);
 	Pvector seek(Pvector v);
+	Pvector flockSeek(Pvector v);
 	Pvector Wander(int,int,Pvector);
 	float angle(Pvector v);
-
+	bool flocker;
 	float health;
 	float alive;
 
