@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "Scene.h"
+#include "Factories.h"
 #include "Bullet.h"
 
 #include "Boid.h"
@@ -8,39 +9,55 @@
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
 
-#include <stdio.h>      /* printf, scanf, puts, NULL */
-#include <stdlib.h>     /* srand, rand */
-#include <time.h>       /* time */
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 // For Boids
 string action = "swarm";
 Flock flock;
 vector<SwarmEnemy*> swarmEnemies;
+vector<Factories*> factEnemies;
 
 void CreateBoids(int, int);
+void CreateFact(int, int);
+void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h);
 void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+
+int flockcount = 0;
+Pvector flockWanderPos;
+vector<bool> IsInFlock;
 
 int main()
 {
-	/* initialize random seed: */
+	// initialize random seed: 
 	srand(time(NULL));
 
 	// Render window width and height
-	int windowWidth = 800;
-	int windowHeight = 600;
+	VideoMode desktop = VideoMode::getDesktopMode();
+	int windowWidth = desktop.width;
+	int windowHeight = desktop.height;
 
 	// Full screen width and height
 	int fullWidth = windowWidth * 9;
 	int fullHeight = windowHeight * 9;
 
 	// Create the main window 
-	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight, 32), "SFML First Program");
+	sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight, 32), "Asteroid Wars!!!");
 
 	// Create a view
 	View view;
 	view.reset(FloatRect(0, 0, windowWidth, windowHeight));
 	view.setViewport(FloatRect(0, 0, 1.0f, 1.0f));
 	Vector2f camPosition(windowWidth / 2, windowHeight / 2);
+
+	// Create radar view
+	View radarView;
+	radarView.setViewport(sf::FloatRect(0.755f, 0, 0.245f, 0.245f));
+
+	// Create radar outline view
+	View radarOutlineView;
+	radarOutlineView.setViewport(sf::FloatRect(0.75f, 0, 0.25f, 0.25f));
 
 	// Window frame rate
 	window.setFramerateLimit(60);
@@ -49,6 +66,9 @@ int main()
 	Player player(windowWidth, windowHeight, fullWidth, fullHeight);
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
+	vector<Factories*>::iterator m_factIterator;
+
+	CreateFact(windowWidth, windowHeight);
 
 	// Create boids
 	CreateBoids(windowWidth, windowHeight);
@@ -61,6 +81,7 @@ int main()
 
 	for (int i = 0; i < noOfObstacles; i++)
 	{
+		//obstacles = obstacleInstance.CreateObstacle(windowWidth, windowHeight, player.GetPosition(), obstacles);
 		obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
 	}
 
@@ -110,7 +131,11 @@ int main()
 
 		#pragma endregion
 
+		radarView.reset(FloatRect(camPosition.x, camPosition.y, windowWidth, windowHeight));
+		
+		//window.setView(radarView);
 
+		// Modify view
 		view.reset(FloatRect(camPosition.x, camPosition.y, windowWidth, windowHeight));
 
 		window.setView(view);
@@ -152,13 +177,18 @@ int main()
 		scene.Draw(window);
 		player.Draw(window);
 
+		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+		UpdateFact(window, &player, windowWidth, windowHeight);
+
+		#pragma region Obstacles
+
 		// Update/Draw obstacles
 		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
 		{
 			(*m_obstacleIterator)->Draw(window);
 			(*m_obstacleIterator)->Update();
 
-			// Bullet collision
+			// Bullet/Obstacle collision
 			if (player.CheckBulletObstacleCollision((*m_obstacleIterator)))
 			{
 				// Remove boid
@@ -166,17 +196,28 @@ int main()
 				break;
 			}
 
+			// Player/Obstacle collision
 			if (player.CheckObstacleCollision((*m_obstacleIterator)))
 			{
 				obstacles.erase(m_obstacleIterator);
 
 				// Collision with an obstacle results in death!
-				player.SetHealth(player.GetHealth() - 100);
+				//player.SetHealth(player.GetHealth() - 100);
 				break;
 			}
 
-			//// Get distance from a swarm boid to a obstacle *****************
-			//flock.GetDisanceFromObstacle((*m_obstacleIterator)->GetPosition());
+			// Get distance from a swarm boid to a obstacle *****************
+			//flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition());
+
+			if (flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition()))
+			{
+				(*m_obstacleIterator)->setInRangeOfBoid(true);
+				//cout << "obstacle in range" << endl;
+			}
+			else
+			{
+				(*m_obstacleIterator)->setInRangeOfBoid(false);
+			}
 
 			// Collision between swarm boids and obstacles
 			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
@@ -187,6 +228,7 @@ int main()
 					flock.removeBoid((*m_swarmIterator)->GetID());
 					swarmEnemies.erase(m_swarmIterator);
 					(*m_obstacleIterator)->SetAlive(false);
+					cout << swarmEnemies.size() << endl;
 					break;
 				}
 			}
@@ -198,15 +240,30 @@ int main()
 				break;
 			}
 
-		}// End iterator for obstacles
+		}// End iterator for obstacles 
 
-		// Create new obstacles
-		if (obstacles.size() < 100)
+
+#pragma endregion
+
+		window.setView(radarOutlineView);
+
+		scene.DrawRadarOutline(window);
+
+		window.setView(radarView);
+
+		scene.DrawOnRadar(window);
+		player.DrawOnRadar(window);
+
+		// Update/Draw obstacles
+		for (m_obstacleIterator = obstacles.begin(); m_obstacleIterator != obstacles.end(); ++m_obstacleIterator)
 		{
-			obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
+			(*m_obstacleIterator)->DrawOnRadar(window);
 		}
 
-		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+		for (int i = 0; i < swarmEnemies.size(); i++)
+		{
+			swarmEnemies[i]->DrawOnRadar(window);
+		}
 
 		window.setView(window.getDefaultView());
 
@@ -220,7 +277,7 @@ int main()
 // Create boids for swarm enemies
 void CreateBoids(int window_width, int window_height)
 {
-	int noOfBoids = 10;
+	int noOfBoids = 15;
 
 	for (int i = 0; i < noOfBoids; i++)
 	{
@@ -231,6 +288,49 @@ void CreateBoids(int window_width, int window_height)
 		flock.addBoid(b, i);
 		swarmEnemies.push_back(swarmEnemy);
 	}
+}
+
+void CreateFact(int window_width, int window_height)
+{
+	int noOffact = 50;
+
+	for (int i = 0; i < noOffact; i++)
+	{
+		Factories* f = new Factories(window_width * 9, window_height * 9);// Create factory
+		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
+		//flock.addBoid(b, i);
+		factEnemies.push_back(f);
+	}
+}
+
+void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h)
+{
+	//check for flocking
+	for (int i = 0; i < factEnemies.size(); i++)
+	{
+		Pvector fPos(factEnemies[i]->GetPosition().x, factEnemies[i]->GetPosition().y); // inner fact
+		for (int j = 0; j < factEnemies.size(); j++)
+		{
+			if (j != i)
+			{
+				Pvector pPos(factEnemies[j]->GetPosition().x, factEnemies[j]->GetPosition().y); //outer fact
+
+				if (fPos.distance(pPos) < 100)
+				{
+					factEnemies[i]->setWander(false);
+					factEnemies[j]->setWander(false);
+				}
+
+			}
+		}
+		if (factEnemies[i]->getAlive() == true)
+		{
+			factEnemies[i]->Update(p, w * 9, h * 9, &factEnemies, Pvector(0, 0));
+			factEnemies[i]->Draw(window);
+		}
+	}
+
+
 }
 
 // Update the boids of the swarm enemies

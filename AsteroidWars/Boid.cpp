@@ -175,19 +175,6 @@ Pvector Boid::seek(Pvector v)
 //are given by the three laws.
 void Boid::update(Pvector v)
 {
-	/*timer++;
-	cout << timer << endl;
-	if (timer >= timeToTend)
-	{
-		timer = 0;
-		tendTowardsPlayer = true;
-	}
-	else
-	{
-		tendTowardsPlayer = false;
-	}*/
-
-
 	//To make the slow down not as abrupt
 	acceleration.mulScalar(.4); // NI
 
@@ -253,6 +240,8 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector
 	playerVelVector.y = playerVel.y;
 
 	Pvector seekVector;
+	seekVector.x = 0;
+	seekVector.y = 0;
 
 	if (!InRange())
 		seekVector = seekPlayer(playerPosVector);
@@ -260,20 +249,23 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector
 		seekVector = pursuePlayer(playerPosVector, playerVelVector);
 
 	Pvector avoidVector;
+	avoidVector.x = 0;
+	avoidVector.y = 0;
 
 	for each(Obstacle* obstacle in obstacles)
 	{
-		Distance(obstacle->GetPosition());
+		if (obstacle->getInRangeOfBoid())
+		{
+			Pvector obstaclePos;
+			obstaclePos.x = obstacle->GetPosition().x;
+			obstaclePos.y = obstacle->GetPosition().y;
 
-		Pvector obstaclePos;
-		obstaclePos.x = obstacle->GetPosition().x;
-		obstaclePos.y = obstacle->GetPosition().y;
+			Pvector obstalceVel;
+			obstalceVel.x = obstacle->GetVelocity().x;
+			obstalceVel.y = obstacle->GetVelocity().y;
 
-		Pvector obstalceVel;
-		obstalceVel.x = obstacle->GetVelocity().x;
-		obstalceVel.y = obstacle->GetVelocity().y;
-
-		avoid(obstaclePos, obstalceVel);
+ 			avoidVector = avoid(obstaclePos, obstalceVel);
+		}
 	}
 
 	Pvector	R;// 'R' is distance between current boid and boid being looked at in for loop
@@ -310,6 +302,7 @@ void Boid::swarm(vector <Boid> v, Vector2f playerPos, Vector2f playerVel, vector
 
 	applyForce(sum);
 	applyForce(seekVector);// Makes boid go towards player
+	applyForce(avoidVector);// Makes boid go towards player
 
 	update(playerPosVector);
 }
@@ -387,25 +380,64 @@ Pvector Boid::pursuePlayer(Pvector pos, Pvector vel)
 
 Pvector Boid::avoid(Pvector obstalcePos, Pvector obstacleVel)
 {
-	Pvector Dp;
-	Dp.x = obstalcePos.x - location.x;
-	Dp.y = obstalcePos.y - location.y;
+	Pvector ahead;
+	Pvector ahead2;
 
-	Pvector Dv;
-	Dv.x = obstacleVel.x - location.x;
-	Dv.y = obstacleVel.y - location.y;
+	Pvector obstacleCentre;
+	obstacleCentre.x = obstalcePos.x + (35.75f / 2);
+	obstacleCentre.y = obstalcePos.y + (39.25f / 2);
 
-	// t = dp.dv / | dv | 2
-	float time;
+	float radius = 35.75f / 2;
 
-	Pvector posByVel;
-	Dp.mulVector(Dv);
+	float MAX_SEE_AHEAD = 150;
 
-	Dp.mulVector(Dv);
+	Pvector normalizedVelocity;
+	normalizedVelocity = velocity;
+	normalizedVelocity.normalize();
 
-	int t = 0;
+	Pvector lengthVelocity;
+	lengthVelocity = velocity;
+	lengthVelocity.normalize();
 
-	return Dv;
+	Pvector dynamic_length;
+	dynamic_length.x = lengthVelocity.x / maxSpeed;
+	dynamic_length.y = lengthVelocity.y / maxSpeed;
+
+	ahead.x = location.x + normalizedVelocity.x * dynamic_length.x;
+	ahead.y = location.y + normalizedVelocity.y * dynamic_length.y;
+
+	ahead2.x = location.x + normalizedVelocity.x * dynamic_length.x * 0.5f;
+	ahead2.y = location.y + normalizedVelocity.y * dynamic_length.y * 0.5f;
+
+	float distance = ahead.distance(obstacleCentre);
+	float distance2 = ahead2.distance(obstacleCentre);
+
+	bool intersectedCircle = false;
+
+	if (distance <= radius || distance2 <= radius)
+	{
+		intersectedCircle = true;
+	}
+
+	Pvector avoidance_force;
+
+	avoidance_force.x = ahead.x - obstacleCentre.x;
+	avoidance_force.y = ahead.y - obstacleCentre.y;
+
+	float MAX_AVOID_FORCE = 30.5f;
+
+	Pvector normalized_avoidance_force;
+	normalized_avoidance_force = avoidance_force;
+	normalized_avoidance_force.normalize();
+
+	avoidance_force.x = normalized_avoidance_force.x * MAX_AVOID_FORCE;
+	avoidance_force.y = normalized_avoidance_force.y * MAX_AVOID_FORCE;
+
+	Pvector steering;
+	steering = avoidance_force;
+	steering.limit(maxForce);
+
+	return steering;
 }
 
 void Boid::Distance(Vector2f obstaclePos)

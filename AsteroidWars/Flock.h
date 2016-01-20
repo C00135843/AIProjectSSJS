@@ -43,7 +43,7 @@ public:
 	void swarming(Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> obstacles);
 
 	void GetDisanceFromPlayer(Vector2f &playerPos);
-	void GetDisanceFromObstacle(Vector2f &obstalcePos);
+	bool InRangeOfObstacle(Vector2f &obstalcePos);
 
 	bool InRange();
 	void SetInRange(bool myInRange);

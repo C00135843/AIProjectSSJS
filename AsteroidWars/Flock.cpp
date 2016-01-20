@@ -67,7 +67,7 @@ void Flock::GetDisanceFromPlayer(Vector2f &playerPos)
 		distance = sqrt(((flockIterator->location.x - playerPos.x)*(flockIterator->location.x - playerPos.x)) + ((flockIterator->location.y - playerPos.y)*(flockIterator->location.y - playerPos.y)));
 		
 		// Check if in range
-		if (distance <= 400)
+		if (distance <= 100)
 		{
 			flockIterator->SetInRange(true);
 		}
@@ -78,7 +78,7 @@ void Flock::GetDisanceFromPlayer(Vector2f &playerPos)
 	}
 }
 
-void Flock::GetDisanceFromObstacle(Vector2f &obstalcePos)
+bool Flock::InRangeOfObstacle(Vector2f &obstalcePos)
 {
 	float distance;
 
@@ -91,11 +91,14 @@ void Flock::GetDisanceFromObstacle(Vector2f &obstalcePos)
 		// Check if in range
 		if (distance <= 150)
 		{
-			flockIterator->SetAvoid(true);
+			flockIterator->SetAvoid(true); // THIS WILL JUST BE CHANGED!
+			//cout << "boid should avoid" << endl;
+			return true;
 		}
 		else
 		{
 			flockIterator->SetAvoid(false);
+			return false;
 		}
 	}
 }

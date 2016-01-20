@@ -10,12 +10,16 @@ private:
 	Texture m_texture;
 	Sprite m_sprite;
 
+	Texture m_radarTexture;
+	Sprite m_radarSprite;
+
 	int m_id;
 	void SetID(int id);
 public:
 	SwarmEnemy(int id);
 
 	void Draw(sf::RenderWindow &window);
+	void DrawOnRadar(sf::RenderWindow &window);
 
 	void SetPosition(int x, int y);
 	void SetRotation(float theta);
