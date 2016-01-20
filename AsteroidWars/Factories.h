@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Player.h"
 #include "Pvector.h"
-//#include "VectorM.h"
+#include "FactoryMissile.h"
+#include "Predator.h"
 #include <list>
 
 using namespace std;
@@ -14,19 +14,21 @@ public:
 	Factories(int x, int y);
 	~Factories()
 	{
-		cout << "Deleteing Factory" << endl;
+		cout << "Deleting Factory" << endl;
 	}
 	void LoadAsset();
 	void SetPosition(sf::Vector2f pos);
 	void SetDirection(sf::Vector2f dir);
+	sf::Vector2f  GetVelocity(){ return Vector2f(velocity.x, velocity.y); };
 	sf::Vector2f  GetPosition(){ return m_Position; };
 	bool checkifDead(){ if (health <= 0){ alive = false; } }
 	bool getAlive(){ return alive; }
 	void DecreaseHealth(){ health--; }
 	void flock(vector<Factories*>* v);
 
-	void Update(Player* p, int w, int h, vector<Factories*>* v, Pvector flockPos);
+	void Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos);
 	void Draw(RenderWindow &window);
+	void DrawOnRadar(RenderWindow &window);
 	Pvector location;
 	Pvector velocity;
 	Pvector acceleration;
@@ -34,16 +36,45 @@ public:
 	bool IsAlive();
 	void setWander(bool w){ wander = w; }
 
+	int GetHealth();
+	void SetHealth(int myHealth);
+
+	bool Fire();
+	void SetFire(bool myFire);
+
+	void CreateMissile(Vector2f playerPos);
+	bool GetCreatePredator();
+	void SetCreatePredator(bool myCreatePredator);
+
+	Sprite GetSprite();
+
+	Pvector Face(Vector2f playerPos);
+
+	bool FactoryMissilePlayerCollision(Sprite&playerSprite);
+
 private:
 	Vector2f m_Position;
 	Vector2f m_Direction;
 
+	Clock m_clock;
+	Time timeSinceLastUpdate;
+
+	Pvector oldVelocity;
+
 	Pvector wtarget;
-	Vector2f m_velocity;
 	Texture m_factoryTexture;
 	Sprite m_factorySprite;
 
+	Texture m_radarTexture;
+	Sprite m_radarSprite;
+
 	vector<Factories*>* factoriesInFlock;
+
+	list<FactoryMissile*> m_factoryMissiles;
+	std::list<FactoryMissile*>::iterator m_missileIterator;
+
+	list<Predator*> m_predators;
+	std::list<Predator*>::iterator m_predatorIterator;
 
 	float SCREEN_WIDTH;
 	float SCREEN_HEIGHT;
@@ -53,6 +84,14 @@ private:
 
 	float m_rotation;
 	float rotationSpeed;
+
+	int m_health;
+
+	bool m_fire;
+	bool m_createPredator;
+
+	int fireTimer;
+	int fireTime;
 
 	//variables for wandering
 	float orientation;
@@ -68,7 +107,6 @@ private:
 	Pvector Alignment(vector<Factories*>* v);
 	Pvector Cohesion(vector<Factories*>* v);
 	float count = 0;
-	void updateflocking(float time);
 	Pvector seek(Pvector v);
 	Pvector flockSeek(Pvector v);
 	Pvector Wander(int, int, Pvector);

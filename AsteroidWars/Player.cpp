@@ -34,6 +34,7 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 
 	// Scale
 	m_playerSprite.setScale(0.125f, 0.125f);
+	//m_playerSprite.setScale(0.0625f, 0.0625f);
 
 	// Rotation
 	m_rotation = 0;
@@ -97,10 +98,11 @@ void Player::Update()
 			}
 		}
 
-
 		// Set velocity
 		m_velocity.x = (float)sin(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
 		m_velocity.y = -(float)cos(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
+
+		//cout << m_velocity.x << ", " << m_velocity.y << endl;
 
 		m_squareSprite.setPosition(m_playerSprite.getPosition());
 
@@ -236,6 +238,23 @@ bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
 	return false;
 }
 
+bool Player::CheckBulletFactoryCollision(Factories *factory)
+{
+	if (m_bullets.size() > 0)
+	{
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if (factory->GetSprite().getGlobalBounds().intersects((*m_bulletIterator)->GetSprite().getGlobalBounds()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
 int Player::GetHealth()
 {
 	return m_health;
@@ -244,4 +263,9 @@ int Player::GetHealth()
 void Player::SetHealth(int myHealth)
 {
 	m_health = myHealth;
+}
+
+Sprite Player::GetSprite()
+{
+	return m_playerSprite;
 }

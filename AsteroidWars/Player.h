@@ -6,6 +6,7 @@
 #include <list>
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
+#include "Factories.h"
 
 class Player
 {
@@ -29,9 +30,12 @@ public:
 	bool CheckSwarmCollision(SwarmEnemy *swarmEnemy);
 	bool CheckObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletObstacleCollision(Obstacle *obstacle);
+	bool CheckBulletFactoryCollision(Factories *factory);
 
 	int GetHealth();
 	void SetHealth(int myHealth);
+
+	Sprite GetSprite();
 private:
 	Vector2f m_position;
 	Vector2f m_velocity;

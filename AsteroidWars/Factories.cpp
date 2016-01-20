@@ -3,19 +3,22 @@
 
 Factories::Factories(int x, int y)
 {
+	// Random position
 	m_Position.x = rand() % x + 1;
 	m_Position.y = rand() % y + 1;
-	//m_Position.x = 500;
-	//m_Position.y = 300;
+
+	// Screen width and height
 	SCREEN_WIDTH = x * 9;
 	SCREEN_HEIGHT = y * 9;
+
 	wander = true;
+
 	LoadAsset();
 	acceleration = Pvector(0, 0);
 	location = Pvector(m_Position.x, m_Position.y);
-	//m_speed = 200;
-	m_maxSpeed = 5.0;
-	//rotationSpeed = 150;
+
+	m_maxSpeed = 4.0;
+
 	orientation = 0;
 	angleBetween = 0;
 	m_maxForce = 0.5;
@@ -24,73 +27,157 @@ Factories::Factories(int x, int y)
 	health = 4;
 	alive = true;
 	flocker = false;
+	m_health = 100;
+
+	m_fire = false;
+
+	fireTimer = 100;
+	fireTime = 100;
+
+	oldVelocity = velocity;
+
+	m_createPredator = false;
 }
+
 void Factories::LoadAsset()
 {
 	m_factoryTexture.loadFromFile("Pics/FactorySpaceShip.png");
 	m_factorySprite.setTexture(m_factoryTexture);
+
+	m_radarTexture.loadFromFile("Pics/FactoryRadar.png");
+	m_radarSprite = sf::Sprite(m_radarTexture);
+
 	//set Origin
 	m_factorySprite.setOrigin(m_factoryTexture.getSize().x / 2.f, m_factoryTexture.getSize().y / 2.f);
+
 	//set Scale
-	m_factorySprite.setScale(.1, .1);
+	m_factorySprite.setScale(.2, .2);
+
 	//set rotation
 	m_rotation = 45;
 	m_factorySprite.rotate(m_rotation);
+
 	//set Position
 	m_factorySprite.setPosition(m_Position);
-
-
-
 }
+
 float Factories::mod(float a, float b)
 {
-
 	float thing = a - b * floor(a / b);
 	return a - b * floor(a / b);
-
 }
+
 void Factories::applyForce(Pvector force)
 {
 	acceleration.addVector(force);
 }
 
-void Factories::Update(Player* p, int w, int h, vector<Factories*>* v, Pvector flockPos)
+void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos)
 {
+	timeSinceLastUpdate = m_clock.getElapsedTime();
+	float time = timeSinceLastUpdate.asSeconds();
+
+	if (time > 5.0f)
+		SetCreatePredator(true);
+
 	Pvector fPos(m_Position.x, m_Position.y);
-	Pvector pPos(p->GetPosition().x, p->GetPosition().y);
+	Pvector pPos(playerPos.x, playerPos.y);
 
-	if (fPos.distance(pPos) < 200) // if the factory gets in range of the player evade
+	// if the factory gets in range of the player evade
+	if (fPos.distance(pPos) > 200 && fPos.distance(pPos) < 800 && fireTimer >= fireTime)// FIRE
 	{
-		applyForce(flee(p->GetPosition()));
-
+		SetFire(true);
+		fireTimer = 0;
 	}
-	else // wander or flock
+	else if (fPos.distance(pPos) < 200) // EVADE
 	{
-		if (wander)
-		{
-			Pvector wanderVel = Wander(w, h, flockPos);
-			applyForce(wanderVel);
-		}
-		else{
-
-			flock(v);
-		}
-
+		applyForce(flee(playerPos));
+		SetFire(false);
 	}
-	acceleration.mulScalar(.4); // NI
+	else if (wander) // WANDER
+	{
+		Pvector wanderVel = Wander(w, h, flockPos);
+		applyForce(wanderVel);
+		SetFire(false);
+	}
+	else // FLOCK
+	{
+		flock(v);
+		SetFire(false);
+	}
+
+	//cout << fireTimer << endl;
+
+	//cout << m_factoryMissiles.size() << endl;
+
+	// If in range fire missile
+	if (Fire())
+	{
+		/*Pvector face;
+		face = Face(Vector2f(playerPos.x, playerPos.y));
+		face.x = -face.x;
+		face.y = -face.y;
+
+		applyForce(face);*/
+
+		if (m_factoryMissiles.size() < 5)
+			CreateMissile(playerPos);
+		SetFire(false);
+	}
+
+	fireTimer++;
+
+	acceleration.mulScalar(.4);
+
 	// Update velocity
 	velocity.addVector(acceleration);
+
 	// Limit speed
-	velocity.limit(m_maxSpeed);// NI
-	location.addVector(velocity);// // NI Updates position
+	velocity.limit(m_maxSpeed);
+	location.addVector(velocity);
+
 	// Reset accelertion to 0 each cycle
-	acceleration.mulScalar(0);// NI
-	//Boundary();
+	acceleration.mulScalar(0);
+
 	m_Position = sf::Vector2f(location.x, location.y);
 	m_Position = Vector2f(mod(m_Position.x, w), mod(m_Position.y, h));
+
 	float a = angle(velocity);
 	m_factorySprite.setRotation(a);
 	m_factorySprite.setPosition(m_Position);
+
+	// Update missiles
+	if (m_factoryMissiles.size() > 0)
+	{
+		// Iterate through list of bullets
+		for (m_missileIterator = m_factoryMissiles.begin(); m_missileIterator != m_factoryMissiles.end(); ++m_missileIterator)
+		{
+			(*m_missileIterator)->Update();
+
+			// Remove bullet if out of bounds
+			if (!(*m_missileIterator)->GetAlive())
+			{
+				m_factoryMissiles.erase(m_missileIterator);
+				break;
+			}
+		}
+	}
+}
+
+void Factories::CreateMissile(Vector2f playerPos)
+{
+	// Missile position
+	Vector2f missilePos = m_Position;
+
+	// Missile velocity(points towards player initially)
+	Vector2f missileVel;
+	missileVel = playerPos - m_Position;
+	float length = sqrt((missileVel.x * missileVel.x) + (missileVel.y * missileVel.y));
+	missileVel = missileVel / length;
+
+	FactoryMissile* factoryMissile = new FactoryMissile(missilePos, missileVel);
+
+	m_factoryMissiles.push_back(factoryMissile);
 }
 
 float Factories::angle(Pvector v)
@@ -102,7 +189,6 @@ float Factories::angle(Pvector v)
 
 Pvector Factories::Wander(int w, int h, Pvector p)
 {
-
 	if (count == 0)
 	{
 		wtarget.x = rand() % w + 1;
@@ -120,8 +206,8 @@ Pvector Factories::Wander(int w, int h, Pvector p)
 	return targetForce;
 }
 
-
-Pvector Factories::flee(sf::Vector2f t){
+Pvector Factories::flee(sf::Vector2f t)
+{
 	Pvector desired_velocity;
 	Pvector steering;
 	Pvector normVel(m_Position.x - t.x, m_Position.y - t.y);
@@ -140,28 +226,18 @@ void Factories::flock(vector<Factories*>* v)
 	Pvector sep = Separation(v);
 	Pvector ali = Alignment(v);
 	Pvector coh = Cohesion(v);
+
 	// Arbitrarily weight these forces
 	sep.mulScalar(1.5);
 	ali.mulScalar(1.0); // Might need to alter weights for different characteristics
 	coh.mulScalar(1.0);
+
 	// Add the force vectors to acceleration
 	applyForce(sep);
 	applyForce(ali);
 	applyForce(coh);
 }
-void Factories::updateflocking(float time)
-{
 
-	//To make the slow down not as abrupt
-	acceleration.mulScalar(.4);
-	// Update velocity
-	velocity.addVector(acceleration);
-	// Limit speed
-	velocity.limit(m_maxSpeed * time);
-	location.addVector(velocity);
-	// Reset accelertion to 0 each cycle
-	acceleration.mulScalar(0);
-}
 Pvector Factories::Separation(vector<Factories*>* v)
 {
 	// If the boid we're looking at is a predator, do not run the separation
@@ -236,6 +312,7 @@ Pvector Factories::Alignment(vector<Factories*>* v)
 		return temp;
 	}
 }
+
 // Cohesion finds the average location of nearby factories and manipulates the 
 // steering force to move in that direction.
 Pvector Factories::Cohesion(vector<Factories*>* v)
@@ -263,18 +340,23 @@ Pvector Factories::Cohesion(vector<Factories*>* v)
 		return temp;
 	}
 }
+
 Pvector Factories::flockSeek(Pvector v)
 {
 	Pvector desired;
 	desired.subVector(v);  // A vector pointing from the location to the target
+
 	// Normalize desired and scale to maximum speed
 	desired.normalize();
 	desired.mulScalar(m_maxSpeed);
+
 	// Steering = Desired minus Velocity
 	acceleration.subTwoVector(desired, velocity);
 	acceleration.limit(m_maxForce);  // Limit to maximum steering force
+
 	return acceleration;
 }
+
 // Seek function limits the maxSpeed, finds necessary steering force and
 // normalizes the vectors.
 Pvector Factories::seek(Pvector t)
@@ -291,7 +373,101 @@ Pvector Factories::seek(Pvector t)
 	steering.limit(m_maxForce);
 	return steering;
 }
+
 void Factories::Draw(RenderWindow &win)
 {
 	win.draw(m_factorySprite);
+
+	// Draw bullets
+	if (m_factoryMissiles.size() > 0)
+	{
+		for each(FactoryMissile* factoryMissile in m_factoryMissiles)
+		{
+			factoryMissile->Draw(win);
+		}
+	}
 }
+
+void Factories::DrawOnRadar(RenderWindow &win)
+{
+	m_radarSprite.setPosition(m_factorySprite.getPosition());
+	win.draw(m_radarSprite);
+}
+
+Pvector Factories::Face(Vector2f playerPos)
+{
+	Pvector desired_velocity;
+	Pvector steering;
+	Pvector normVel(m_Position.x - playerPos.x, m_Position.y - playerPos.y);
+	normVel.normalize();
+
+	desired_velocity.x = normVel.x * m_maxSpeed;
+	desired_velocity.y = normVel.y * m_maxSpeed;
+
+	steering = steering.subTwoVector(desired_velocity, velocity);
+	steering.limit(m_maxForce);
+	return steering;
+}
+
+bool Factories::FactoryMissilePlayerCollision(Sprite&playerSprite)
+{
+	if (m_factoryMissiles.size() > 0)
+	{
+		// Iterate through list of bullets
+		for (m_missileIterator = m_factoryMissiles.begin(); m_missileIterator != m_factoryMissiles.end(); ++m_missileIterator)
+		{
+			if ((*m_missileIterator)->GetSprite().getGlobalBounds().intersects(playerSprite.getGlobalBounds()))
+			{
+				m_factoryMissiles.erase(m_missileIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+#pragma region Getters/Setters
+
+int Factories::GetHealth()
+{
+	return m_health;
+}
+
+void Factories::SetHealth(int myHealth)
+{
+	m_health = myHealth;
+}
+
+Sprite Factories::GetSprite()
+{
+	return m_factorySprite;
+}
+
+bool Factories::Fire()
+{
+	return m_fire;
+}
+
+void Factories::SetFire(bool myFire)
+{
+	m_fire = myFire;
+}
+
+bool Factories::GetCreatePredator()
+{
+	return m_createPredator;
+}
+
+void Factories::SetCreatePredator(bool myCreatePredator)
+{
+	if (!myCreatePredator)
+	{
+		m_clock.restart();
+	}
+
+	m_createPredator = myCreatePredator;
+}
+
+#pragma endregion
+

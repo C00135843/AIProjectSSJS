@@ -84,9 +84,11 @@
     <ClInclude Include="Boid.h" />
     <ClInclude Include="Bullet.h" />
     <ClInclude Include="Factories.h" />
+    <ClInclude Include="FactoryMissile.h" />
     <ClInclude Include="Flock.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Predator.h" />
     <ClInclude Include="Pvector.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="stdafx.h" />
@@ -98,9 +100,11 @@
     <ClCompile Include="Boid.cpp" />
     <ClCompile Include="Bullet.cpp" />
     <ClCompile Include="Factories.cpp" />
+    <ClCompile Include="FactoryMissile.cpp" />
     <ClCompile Include="Flock.cpp" />
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Predator.cpp" />
     <ClCompile Include="Pvector.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="stdafx.cpp">

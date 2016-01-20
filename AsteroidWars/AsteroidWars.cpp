@@ -8,6 +8,7 @@
 #include "Flock.h"
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
+#include "Predator.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,11 +19,14 @@ string action = "swarm";
 Flock flock;
 vector<SwarmEnemy*> swarmEnemies;
 vector<Factories*> factEnemies;
+vector<Predator*> predators;
 
 void CreateBoids(int, int);
 void CreateFact(int, int);
-void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h);
-void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+void CreatePredators(Vector2f position);
+void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite&playerSprite);
+void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h);
 
 int flockcount = 0;
 Pvector flockWanderPos;
@@ -37,6 +41,8 @@ int main()
 	VideoMode desktop = VideoMode::getDesktopMode();
 	int windowWidth = desktop.width;
 	int windowHeight = desktop.height;
+	//int windowWidth = 800;
+	//int windowHeight = 600;
 
 	// Full screen width and height
 	int fullWidth = windowWidth * 9;
@@ -67,6 +73,7 @@ int main()
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
 	vector<Factories*>::iterator m_factIterator;
+	vector<Predator*>::iterator m_predatorIterator;
 
 	CreateFact(windowWidth, windowHeight);
 
@@ -77,13 +84,12 @@ int main()
 	vector<Obstacle*> obstacles;
 	Obstacle obstacleInstance;
 	vector<Obstacle*>::iterator m_obstacleIterator;
-	int noOfObstacles = 100;
+	int noOfObstacles = 50;
 
-	for (int i = 0; i < noOfObstacles; i++)
+	/*for (int i = 0; i < noOfObstacles; i++)
 	{
-		//obstacles = obstacleInstance.CreateObstacle(windowWidth, windowHeight, player.GetPosition(), obstacles);
 		obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
-	}
+	}*/
 
 	// Start game loop 
 	while (window.isOpen())
@@ -170,6 +176,21 @@ int main()
 					break;
 				}
 			}// End collision checking  
+
+			for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
+			{
+				// Bullet collision
+				if (player.CheckBulletFactoryCollision((*m_factIterator)))
+				{
+					// Remove boid
+					(*m_factIterator)->SetHealth((*m_factIterator)->GetHealth() - 25);
+					if ((*m_factIterator)->GetHealth() <= 0)
+					{
+						factEnemies.erase(m_factIterator);
+						break;
+					}
+				}
+			}
 		}
 
 		#pragma endregion
@@ -177,8 +198,9 @@ int main()
 		scene.Draw(window);
 		player.Draw(window);
 
-		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
-		UpdateFact(window, &player, windowWidth, windowHeight);
+		//UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+		UpdateFact(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite());
+		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight);
 
 		#pragma region Obstacles
 
@@ -245,6 +267,8 @@ int main()
 
 #pragma endregion
 
+		#pragma region RadarView
+
 		window.setView(radarOutlineView);
 
 		scene.DrawRadarOutline(window);
@@ -264,6 +288,18 @@ int main()
 		{
 			swarmEnemies[i]->DrawOnRadar(window);
 		}
+
+		for (int i = 0; i < factEnemies.size(); i++)
+		{
+			factEnemies[i]->DrawOnRadar(window);
+		}
+
+		for (int i = 0; i < predators.size(); i++)
+		{
+			predators[i]->DrawOnRadar(window);
+		}
+
+		#pragma endregion
 
 		window.setView(window.getDefaultView());
 
@@ -292,18 +328,39 @@ void CreateBoids(int window_width, int window_height)
 
 void CreateFact(int window_width, int window_height)
 {
-	int noOffact = 50;
+	int noOffact = 1;
 
 	for (int i = 0; i < noOffact; i++)
 	{
-		Factories* f = new Factories(window_width * 9, window_height * 9);// Create factory
+		Factories* f = new Factories(window_width, window_height);// Create factory
 		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
 		//flock.addBoid(b, i);
 		factEnemies.push_back(f);
 	}
 }
 
-void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h)
+void CreatePredators(Vector2f position)
+{
+	//cout << "CreatePredators" << endl;
+
+	Predator* predator = new Predator(position);
+
+	predators.push_back(predator);
+}
+
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h)
+{
+	if (predators.size() > 0)
+	{
+		for (int i = 0; i < predators.size(); i++)
+		{
+			predators[i]->Update(&predators, Pvector(playerPos.x, playerPos.y), w * 9, h * 9);
+			predators[i]->Draw(window);
+		}
+	}
+}
+
+void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite&playerSprite)
 {
 	//check for flocking
 	for (int i = 0; i < factEnemies.size(); i++)
@@ -326,11 +383,17 @@ void UpdateFact(sf::RenderWindow &window, Player* p, int w, int h)
 		if (factEnemies[i]->getAlive() == true)
 		{
 			factEnemies[i]->Update(p, w * 9, h * 9, &factEnemies, Pvector(0, 0));
+			factEnemies[i]->FactoryMissilePlayerCollision(playerSprite);
 			factEnemies[i]->Draw(window);
+
+			// Call create a predator if we can create a predator
+			if (factEnemies[i]->GetCreatePredator())
+			{
+				CreatePredators(factEnemies[i]->GetPosition());
+				factEnemies[i]->SetCreatePredator(false);
+			}
 		}
 	}
-
-
 }
 
 // Update the boids of the swarm enemies
