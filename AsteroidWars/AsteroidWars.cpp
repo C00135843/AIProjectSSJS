@@ -9,6 +9,7 @@
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
 #include "Predator.h"
+#include "PowerUp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,15 +83,22 @@ int main()
 
 	// Create obstalces
 	vector<Obstacle*> obstacles;
+	vector<PowerUp*> powerUp;
 	Obstacle obstacleInstance;
 	vector<Obstacle*>::iterator m_obstacleIterator;
 	int noOfObstacles = 50;
+	int noOfPowerUPs = 10;
 
 	for (int i = 0; i < noOfObstacles; i++)
 	{
 		obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
 	}
-
+	for (int i = 0; i < noOfPowerUPs; i++)
+	{
+		int randNum = (rand() % 3) + 1;
+		PowerUp* p = new PowerUp(fullWidth, fullHeight, randNum);
+		powerUp.push_back(p);
+	}
 	// Start game loop 
 	while (window.isOpen())
 	{
@@ -172,7 +180,7 @@ int main()
 					// Remove boid
 					flock.removeBoid((*m_swarmIterator)->GetID());
 					swarmEnemies.erase(m_swarmIterator);
-					player.SetHealth(player.GetHealth() - 20);
+					//player.SetHealth(player.GetHealth() - 20);
 					break;
 				}
 			}// End collision checking  
@@ -197,10 +205,14 @@ int main()
 
 		scene.Draw(window);
 		player.Draw(window);
-
+		for (int i = 0; i < noOfPowerUPs; i++)
+		{
+			powerUp[i]->Draw(window);
+		}
 		//UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
 		UpdateFact(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles);
 		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight);
+
 
 		#pragma region Obstacles
 
@@ -314,6 +326,10 @@ int main()
 		for (int i = 0; i < predators.size(); i++)
 		{
 			predators[i]->DrawOnRadar(window);
+		}
+		for (int i = 0; i < powerUp.size(); i++)
+		{
+			powerUp[i]->DrawRadar(window);
 		}
 
 		#pragma endregion
