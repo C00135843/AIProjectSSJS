@@ -31,6 +31,7 @@ public:
 	bool CheckObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletFactoryCollision(Factories *factory);
+	bool CheckBulletPredatorCollision(Sprite &predator);
 
 	int GetHealth();
 	void SetHealth(int myHealth);

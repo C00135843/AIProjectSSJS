@@ -113,7 +113,7 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 
 	for each(Obstacle* obstacle in obstacles)
 	{
-		if (obstacle->getInRangeOfBoid())
+		if (obstacle->getInRangeOfFactory())
 		{
 			Pvector obstaclePos;
 			obstaclePos.x = obstacle->GetPosition().x;
@@ -126,7 +126,7 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 			avoidVector = avoid(obstaclePos, obstalceVel);
 		}
 	}
-	applyForce(avoidVector);
+
 	// If in range fire missile
 	if (Fire())
 	{
@@ -172,6 +172,7 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 			}
 		}
 	}
+	applyForce(avoidVector);
 }
 
 void Factories::CreateMissile(Vector2f playerPos)
@@ -482,7 +483,8 @@ Pvector Factories::avoid(Pvector obstalcePos, Pvector obstacleVel)
 }
 
 
-bool Factories::inRangeOfObs(Vector2f obstalcePos){
+bool Factories::inRangeOfObs(Vector2f obstalcePos)
+{
 	float distance = sqrt(((m_Position.x - obstalcePos.x)*(m_Position.x - obstalcePos.x)) + ((m_Position.y - obstalcePos.y)*(m_Position.y - obstalcePos.y)));
 
 	// Check if in range

@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 #include "Player.h"
 //#include <cmath>
@@ -244,6 +245,23 @@ bool Player::CheckBulletFactoryCollision(Factories *factory)
 		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
 		{
 			if (factory->GetSprite().getGlobalBounds().intersects((*m_bulletIterator)->GetSprite().getGlobalBounds()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
+bool Player::CheckBulletPredatorCollision(Sprite &predator)
+{
+	if (m_bullets.size() > 0)
+	{
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if (predator.getGlobalBounds().intersects((*m_bulletIterator)->GetSprite().getGlobalBounds()))
 			{
 				m_bullets.erase(m_bulletIterator);
 				return true;

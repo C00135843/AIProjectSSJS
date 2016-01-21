@@ -3,6 +3,7 @@
 #include <list>
 #include "Pvector.h"
 #include "Bullet.h"
+#include "Obstacle.h"
 
 class Predator
 {
@@ -26,19 +27,27 @@ private:
 
 	bool predator;
 
+	bool m_avoid;
+
 public:
 	Predator(Vector2f position);
 
 	void Draw(RenderWindow &window);
 	void DrawOnRadar(RenderWindow &window);
-	void Update(vector<Predator*>* v, Pvector &playerPos, int width, int height);
+	void Update(vector<Predator*>* v, Pvector &playerPos, int width, int height, vector<Obstacle*> obstacles);
 
 	bool GetAlive();
 	void SetAlive(bool myAlive);
 	float Distance(Vector2f &p);
 	sf::Vector2f  GetPosition(){ return Vector2f(m_position.x, m_position.y); };
 
+	bool BulletPlayerCollision(Sprite&playerSprite);
+
 	Sprite GetSprite();
+
+	bool inRangeOfObs(Vector2f);
+
+	void SetAvoid(bool a){ m_avoid = a; }
 
 	void applyForce(Pvector force);
 	float mod(float, float);
@@ -58,4 +67,6 @@ public:
 	void run(vector <Predator> v);
 	void flock(vector<Predator*>* v);
 	float angle(Pvector v);
+
+	Pvector avoid(Pvector obstalcePos, Pvector obstacleVel);
 };

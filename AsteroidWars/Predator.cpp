@@ -15,11 +15,13 @@ Predator::Predator(Vector2f position)
 
 	m_radarTexture.loadFromFile("Pics/Red.png");
 	m_radarSprite.setTexture(m_radarTexture);
+	m_radarSprite.setScale(2.0f, 2.0f);
 
 	m_sprite.setPosition(Vector2f(m_position.x, m_position.y));
 	m_sprite.setScale(0.75f, 0.75f);
 
 	m_alive = true;
+	m_avoid = false;
 
 	maxSpeed = 3.5f;
 	maxForce = 0.5;
@@ -186,7 +188,7 @@ void Predator::run(vector <Predator> v)
 
 //Update modifies velocity, location, and resets acceleration with values that
 //are given by the three laws.
-void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h)
+void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h, vector<Obstacle*> obstacles)
 {
 	timeSinceLastUpdate = m_clock.getElapsedTime();
 	float time = timeSinceLastUpdate.asSeconds();
@@ -213,6 +215,26 @@ void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h)
 		flock(v);
 		applyForce(flockSeek(playerPos));
 		setFire(false);
+	}
+
+	Pvector avoidVector;
+	avoidVector.x = 0;
+	avoidVector.y = 0;
+
+	for each(Obstacle* obstacle in obstacles)
+	{
+		if (obstacle->getInRangeOfPredator())
+		{
+			Pvector obstaclePos;
+			obstaclePos.x = obstacle->GetPosition().x;
+			obstaclePos.y = obstacle->GetPosition().y;
+
+			Pvector obstalceVel;
+			obstalceVel.x = obstacle->GetVelocity().x;
+			obstalceVel.y = obstacle->GetVelocity().y;
+
+			avoidVector = avoid(obstaclePos, obstalceVel);
+		}
 	}
 
 	if (Fire())
@@ -245,7 +267,7 @@ void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h)
 
 	UpdateBullets();
 
-
+	applyForce(avoidVector);
 }
 void Predator::UpdateBullets()
 {
@@ -306,6 +328,42 @@ Vector2f Predator::Face(Vector2f &v){
 
 }
 
+bool Predator::inRangeOfObs(Vector2f obstalcePos)
+{
+	float distance = sqrt(((m_position.x - obstalcePos.x)*(m_position.x - obstalcePos.x)) + ((m_position.y - obstalcePos.y)*(m_position.y - obstalcePos.y)));
+
+	// Check if in range
+	if (distance <= 150)
+	{
+		SetAvoid(true); // THIS WILL JUST BE CHANGED!
+		//cout << "boid should avoid" << endl;
+		return true;
+	}
+	else
+	{
+		SetAvoid(false);
+		return false;
+	}
+}
+
+bool Predator::BulletPlayerCollision(Sprite&playerSprite)
+{
+	if (m_bullets.size() > 0)
+	{
+		// Iterate through list of bullets
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			if ((*m_bulletIterator)->GetSprite().getGlobalBounds().intersects(playerSprite.getGlobalBounds()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				return true;
+				break;
+			}
+		}
+	}
+	return false;
+}
+
 void Predator::createMissile(int w,int h)
 {
 	Vector2f bulletPos;
@@ -319,7 +377,67 @@ void Predator::createMissile(int w,int h)
 	m_clock.restart();
 }
 
+Pvector Predator::avoid(Pvector obstalcePos, Pvector obstacleVel)
+{
+	Pvector ahead;
+	Pvector ahead2;
 
+	Pvector obstacleCentre;
+	obstacleCentre.x = obstalcePos.x + (35.75f / 2);
+	obstacleCentre.y = obstalcePos.y + (39.25f / 2);
+
+	float radius = 35.75f / 2;
+
+	float MAX_SEE_AHEAD = 150;
+
+	Pvector normalizedVelocity;
+	normalizedVelocity = m_velocity;
+	normalizedVelocity.normalize();
+
+	Pvector lengthVelocity;
+	lengthVelocity = m_velocity;
+	lengthVelocity.normalize();
+
+	Pvector dynamic_length;
+	dynamic_length.x = lengthVelocity.x / maxSpeed;
+	dynamic_length.y = lengthVelocity.y / maxSpeed;
+
+	ahead.x = m_position.x + normalizedVelocity.x * dynamic_length.x;
+	ahead.y = m_position.y + normalizedVelocity.y * dynamic_length.y;
+
+	ahead2.x = m_position.x + normalizedVelocity.x * dynamic_length.x * 0.5f;
+	ahead2.y = m_position.y + normalizedVelocity.y * dynamic_length.y * 0.5f;
+
+	float distance = ahead.distance(obstacleCentre);
+	float distance2 = ahead2.distance(obstacleCentre);
+
+	bool intersectedCircle = false;
+
+	if (distance <= radius || distance2 <= radius)
+	{
+		intersectedCircle = true;
+	}
+
+	Pvector avoidance_force;
+
+	avoidance_force.x = ahead.x - obstacleCentre.x;
+	avoidance_force.y = ahead.y - obstacleCentre.y;
+
+	float MAX_AVOID_FORCE = 30.5f;
+
+	Pvector normalized_avoidance_force;
+	normalized_avoidance_force = avoidance_force;
+	normalized_avoidance_force.normalize();
+
+	avoidance_force.x = normalized_avoidance_force.x * MAX_AVOID_FORCE;
+	avoidance_force.y = normalized_avoidance_force.y * MAX_AVOID_FORCE;
+
+	Pvector steering;
+	steering = avoidance_force;
+	steering.limit(maxForce);
+
+	return steering;
+}
 
 // Calculates the angle for the velocity of a boid which allows the visual 
 // image to rotate in the direction that it is going in.

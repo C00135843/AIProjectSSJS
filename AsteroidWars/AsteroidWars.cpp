@@ -26,7 +26,7 @@ void CreateFact(int, int);
 void CreatePredators(Vector2f position);
 void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite &playerSprite, vector<Obstacle*> obstacles);
 void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
-void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h);
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles);
 
 int flockcount = 0;
 Pvector flockWanderPos;
@@ -75,7 +75,8 @@ int main()
 	vector<Factories*>::iterator m_factIterator;
 	vector<Predator*>::iterator m_predatorIterator;
 
-	CreateFact(windowWidth, windowHeight);
+	CreateFact(fullWidth, fullHeight);
+	//CreateFact(windowWidth, windowHeight);
 
 	// Create boids
 	CreateBoids(windowWidth, windowHeight);
@@ -177,6 +178,7 @@ int main()
 				}
 			}// End collision checking  
 
+			// Check collision between bullet and factories
 			for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
 			{
 				// Bullet collision
@@ -190,6 +192,21 @@ int main()
 						break;
 					}
 				}
+			}// End for
+
+			// Check collision between bullet and predators
+			if (predators.size() > 0)
+			{
+				for (m_predatorIterator = predators.begin(); m_predatorIterator != predators.end(); ++m_predatorIterator)
+				{
+					// Bullet collision
+					if (player.CheckBulletPredatorCollision((*m_predatorIterator)->GetSprite()))
+					{
+						// Remove boid
+						predators.erase(m_predatorIterator);
+						break;
+					}
+				}// End for
 			}
 		}
 
@@ -200,7 +217,7 @@ int main()
 
 		//UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
 		UpdateFact(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles);
-		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight);
+		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles);
 
 		#pragma region Obstacles
 
@@ -228,34 +245,43 @@ int main()
 				break;
 			}
 
-			// Get distance from a swarm boid to a obstacle *****************
-			//flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition());
-			for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
+			// Factory obstalce stuff
+			if (factEnemies.size() > 0)
 			{
-				if ((*m_factIterator)->inRangeOfObs((*m_obstacleIterator)->GetPosition())){
-					(*m_obstacleIterator)->setInRangeOfBoid(true);
+				// Get distance of factory from obstacle
+				for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
+				{
+					if ((*m_factIterator)->inRangeOfObs((*m_obstacleIterator)->GetPosition()))
+					{
+						(*m_obstacleIterator)->setInRangeOfFactory(true);
+					}
+					else
+						(*m_obstacleIterator)->setInRangeOfFactory(false);
+				}
 
+				// Factory enemy collision with obstacle
+				for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
+				{
+					if ((*m_obstacleIterator)->CollisionWithFact((*m_factIterator)->GetSprite()))
+					{
+						factEnemies.erase(m_factIterator);
+						(*m_obstacleIterator)->SetAlive(false);
+						break;
+					}
+				}
+			}
+
+			// Get distance of swarm enemy from obstacle
+			if (flock.getSize() > 0)
+			{
+				if (flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition()))
+				{
+					(*m_obstacleIterator)->setInRangeOfBoid(true);
 				}
 				else
-					(*m_obstacleIterator)->setInRangeOfBoid(false);
-			}
-			for (m_factIterator = factEnemies.begin(); m_factIterator != factEnemies.end(); ++m_factIterator)
-			{
-				if ((*m_obstacleIterator)->CollisionWithFact((*m_factIterator)->GetSprite()))
 				{
-					factEnemies.erase(m_factIterator);
-					(*m_obstacleIterator)->SetAlive(false);
-					break;
+					(*m_obstacleIterator)->setInRangeOfBoid(false);
 				}
-			}
-			if (flock.InRangeOfObstacle((*m_obstacleIterator)->GetPosition()))
-			{
-				(*m_obstacleIterator)->setInRangeOfBoid(true);
-				//cout << "obstacle in range" << endl;
-			}
-			else
-			{
-				(*m_obstacleIterator)->setInRangeOfBoid(false);
 			}
 
 			// Collision between swarm boids and obstacles
@@ -269,6 +295,32 @@ int main()
 					(*m_obstacleIterator)->SetAlive(false);
 					cout << swarmEnemies.size() << endl;
 					break;
+				}
+			}
+
+			// Predator obstacle stuff
+			if (predators.size() > 0)
+			{
+				// Get distance of factory from obstacle
+				for (m_predatorIterator = predators.begin(); m_predatorIterator != predators.end(); ++m_predatorIterator)
+				{
+					if ((*m_predatorIterator)->inRangeOfObs((*m_obstacleIterator)->GetPosition()))
+					{
+						(*m_obstacleIterator)->setInRangeOfPredator(true);
+					}
+					else
+						(*m_obstacleIterator)->setInRangeOfPredator(false);
+				}
+
+				// Predator collision with obstacle
+				for (m_predatorIterator = predators.begin(); m_predatorIterator != predators.end(); ++m_predatorIterator)
+				{
+					if ((*m_obstacleIterator)->CollisionWithPredator((*m_predatorIterator)->GetSprite()))
+					{
+						predators.erase(m_predatorIterator);
+						(*m_obstacleIterator)->SetAlive(false);
+						break;
+					}
 				}
 			}
 
@@ -330,17 +382,17 @@ int main()
 // Create boids for swarm enemies
 void CreateBoids(int window_width, int window_height)
 {
-	int noOfBoids = 15;
+	//int noOfBoids = 15;
 
-	for (int i = 0; i < noOfBoids; i++)
-	{
-		Boid b(window_width, window_height, i);// Create boid
-		SwarmEnemy *swarmEnemy = new SwarmEnemy(i);
+	//for (int i = 0; i < noOfBoids; i++)
+	//{
+	//	Boid b(window_width, window_height, i);// Create boid
+	//	SwarmEnemy *swarmEnemy = new SwarmEnemy(i);
 
-		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
-		flock.addBoid(b, i);
-		swarmEnemies.push_back(swarmEnemy);
-	}
+	//	// Adding the boid to the flock and adding the ships to the vector swarmEnemies
+	//	flock.addBoid(b, i);
+	//	swarmEnemies.push_back(swarmEnemy);
+	//}
 }
 
 void CreateFact(int window_width, int window_height)
@@ -365,13 +417,14 @@ void CreatePredators(Vector2f position)
 	predators.push_back(predator);
 }
 
-void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h)
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles)
 {
 	if (predators.size() > 0)
 	{
 		for (int i = 0; i < predators.size(); i++)
 		{
-			predators[i]->Update(&predators, Pvector(playerPos.x, playerPos.y), w * 9, h * 9);
+			predators[i]->Update(&predators, Pvector(playerPos.x, playerPos.y), w * 9, h * 9, obstacles);
+			predators[i]->BulletPlayerCollision(playerSprite);
 			predators[i]->Draw(window);
 		}
 	}
@@ -404,11 +457,11 @@ void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite&playe
 			factEnemies[i]->Draw(window);
 
 			// Call create a predator if we can create a predator
-			//if (factEnemies[i]->GetCreatePredator())
-			//{
-			//	CreatePredators(factEnemies[i]->GetPosition());
-			//	factEnemies[i]->SetCreatePredator(false);
-			//}
+			if (factEnemies[i]->GetCreatePredator())
+			{
+				CreatePredators(factEnemies[i]->GetPosition());
+				factEnemies[i]->SetCreatePredator(false);
+			}
 		}
 	}
 }

@@ -22,6 +22,8 @@ private:
 	int m_speed;
 
 	bool m_inRangeOfBoid;
+	bool m_inRangeOfFactory;
+	bool m_inRangeOfPredator;
 
 public:
 	Obstacle();// Default constructor
@@ -33,6 +35,7 @@ public:
 
 	bool CollisionWithSwarm(SwarmEnemy *swarmEnemy);
 	bool CollisionWithFact(Sprite &factEnemy);
+	bool CollisionWithPredator(Sprite &predator);
 	void SetAlive(bool myAlive);
 	bool GetAlive();
 
@@ -44,6 +47,13 @@ public:
 
 	bool getInRangeOfBoid();
 	void setInRangeOfBoid(bool myInRangeOfBoid);
+
+	bool getInRangeOfFactory();
+	void setInRangeOfFactory(bool myInRangeOfFactory);
+
+	bool getInRangeOfPredator();
+	void setInRangeOfPredator(bool myInRangeOfPredator);
+
 };
 
 #endif
