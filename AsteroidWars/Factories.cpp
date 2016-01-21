@@ -12,12 +12,12 @@ Factories::Factories(int x, int y)
 	SCREEN_HEIGHT = y * 9;
 
 	wander = true;
-
+	m_avoid = false;
 	LoadAsset();
 	acceleration = Pvector(0, 0);
 	location = Pvector(m_Position.x, m_Position.y);
 
-	m_maxSpeed = 4.0;
+	m_maxSpeed = 5.0;
 
 	orientation = 0;
 	angleBetween = 0;
@@ -46,6 +46,7 @@ void Factories::LoadAsset()
 
 	m_radarTexture.loadFromFile("Pics/FactoryRadar.png");
 	m_radarSprite = sf::Sprite(m_radarTexture);
+	m_radarSprite.setScale(2.0f, 2.0f);
 
 	//set Origin
 	m_factorySprite.setOrigin(m_factoryTexture.getSize().x / 2.f, m_factoryTexture.getSize().y / 2.f);
@@ -72,7 +73,7 @@ void Factories::applyForce(Pvector force)
 	acceleration.addVector(force);
 }
 
-void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos)
+void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos, vector<Obstacle*> obstacles)
 {
 	timeSinceLastUpdate = m_clock.getElapsedTime();
 	float time = timeSinceLastUpdate.asSeconds();
@@ -106,20 +107,29 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 		SetFire(false);
 	}
 
-	//cout << fireTimer << endl;
+	Pvector avoidVector;
+	avoidVector.x = 0;
+	avoidVector.y = 0;
 
-	//cout << m_factoryMissiles.size() << endl;
+	for each(Obstacle* obstacle in obstacles)
+	{
+		if (obstacle->getInRangeOfBoid())
+		{
+			Pvector obstaclePos;
+			obstaclePos.x = obstacle->GetPosition().x;
+			obstaclePos.y = obstacle->GetPosition().y;
 
+			Pvector obstalceVel;
+			obstalceVel.x = obstacle->GetVelocity().x;
+			obstalceVel.y = obstacle->GetVelocity().y;
+
+			avoidVector = avoid(obstaclePos, obstalceVel);
+		}
+	}
+	applyForce(avoidVector);
 	// If in range fire missile
 	if (Fire())
 	{
-		/*Pvector face;
-		face = Face(Vector2f(playerPos.x, playerPos.y));
-		face.x = -face.x;
-		face.y = -face.y;
-
-		applyForce(face);*/
-
 		if (m_factoryMissiles.size() < 5)
 			CreateMissile(playerPos);
 		SetFire(false);
@@ -152,7 +162,7 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 		// Iterate through list of bullets
 		for (m_missileIterator = m_factoryMissiles.begin(); m_missileIterator != m_factoryMissiles.end(); ++m_missileIterator)
 		{
-			(*m_missileIterator)->Update();
+			(*m_missileIterator)->Update(playerPos);
 
 			// Remove bullet if out of bounds
 			if (!(*m_missileIterator)->GetAlive())
@@ -407,6 +417,86 @@ Pvector Factories::Face(Vector2f playerPos)
 	steering = steering.subTwoVector(desired_velocity, velocity);
 	steering.limit(m_maxForce);
 	return steering;
+}
+
+Pvector Factories::avoid(Pvector obstalcePos, Pvector obstacleVel)
+{
+	Pvector ahead;
+	Pvector ahead2;
+
+	Pvector obstacleCentre;
+	obstacleCentre.x = obstalcePos.x + (35.75f / 2);
+	obstacleCentre.y = obstalcePos.y + (39.25f / 2);
+
+	float radius = 35.75f / 2;
+
+	float MAX_SEE_AHEAD = 150;
+
+	Pvector normalizedVelocity;
+	normalizedVelocity = velocity;
+	normalizedVelocity.normalize();
+
+	Pvector lengthVelocity;
+	lengthVelocity = velocity;
+	lengthVelocity.normalize();
+
+	Pvector dynamic_length;
+	dynamic_length.x = lengthVelocity.x / m_maxSpeed;
+	dynamic_length.y = lengthVelocity.y / m_maxSpeed;
+
+	ahead.x = location.x + normalizedVelocity.x * dynamic_length.x;
+	ahead.y = location.y + normalizedVelocity.y * dynamic_length.y;
+
+	ahead2.x = location.x + normalizedVelocity.x * dynamic_length.x * 0.5f;
+	ahead2.y = location.y + normalizedVelocity.y * dynamic_length.y * 0.5f;
+
+	float distance = ahead.distance(obstacleCentre);
+	float distance2 = ahead2.distance(obstacleCentre);
+
+	bool intersectedCircle = false;
+
+	if (distance <= radius || distance2 <= radius)
+	{
+		intersectedCircle = true;
+	}
+
+	Pvector avoidance_force;
+
+	avoidance_force.x = ahead.x - obstacleCentre.x;
+	avoidance_force.y = ahead.y - obstacleCentre.y;
+
+	float MAX_AVOID_FORCE = 30.5f;
+
+	Pvector normalized_avoidance_force;
+	normalized_avoidance_force = avoidance_force;
+	normalized_avoidance_force.normalize();
+
+	avoidance_force.x = normalized_avoidance_force.x * MAX_AVOID_FORCE;
+	avoidance_force.y = normalized_avoidance_force.y * MAX_AVOID_FORCE;
+
+	Pvector steering;
+	steering = avoidance_force;
+	steering.limit(m_maxForce);
+
+	return steering;
+}
+
+
+bool Factories::inRangeOfObs(Vector2f obstalcePos){
+	float distance = sqrt(((m_Position.x - obstalcePos.x)*(m_Position.x - obstalcePos.x)) + ((m_Position.y - obstalcePos.y)*(m_Position.y - obstalcePos.y)));
+
+	// Check if in range
+	if (distance <= 150)
+	{
+		SetAvoid(true); // THIS WILL JUST BE CHANGED!
+		//cout << "boid should avoid" << endl;
+		return true;
+	}
+	else
+	{
+		SetAvoid(false);
+		return false;
+	}
 }
 
 bool Factories::FactoryMissilePlayerCollision(Sprite&playerSprite)

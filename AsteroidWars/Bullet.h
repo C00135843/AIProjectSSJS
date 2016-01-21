@@ -4,7 +4,7 @@
 class Bullet
 {
 public:
-	Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, int fullWidth, int fullHeight);
+	Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, int fullWidth, int fullHeight,bool predator);
 
 	void Update();
 	void Draw(RenderWindow &window);

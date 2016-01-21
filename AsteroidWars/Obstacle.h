@@ -32,7 +32,7 @@ public:
 	void Update();
 
 	bool CollisionWithSwarm(SwarmEnemy *swarmEnemy);
-
+	bool CollisionWithFact(Sprite &factEnemy);
 	void SetAlive(bool myAlive);
 	bool GetAlive();
 

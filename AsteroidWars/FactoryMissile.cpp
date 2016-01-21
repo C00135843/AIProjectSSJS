@@ -28,7 +28,7 @@ void FactoryMissile::Draw(RenderWindow &window)
 	window.draw(m_sprite);
 }
 
-void FactoryMissile::Update()
+void FactoryMissile::Update(Vector2f &p)
 {
 	timeSinceLastUpdate = m_clock.getElapsedTime();
 	float time = timeSinceLastUpdate.asSeconds();
@@ -37,8 +37,8 @@ void FactoryMissile::Update()
 	{
 		alive = false;
 	}
-
-	m_position += m_velocity;
+	Pvector pPos(p.x, p.y);
+	m_position += seek(pPos);
 	m_sprite.setPosition(m_position);
 }
 
@@ -55,4 +55,17 @@ void FactoryMissile::SetAlive(bool myAlive)
 Sprite FactoryMissile::GetSprite()
 {
 	return m_sprite;
+}
+Vector2f FactoryMissile::seek(Pvector t)
+{
+	Pvector desired_velocity;
+	Pvector steering;
+	Pvector normVel(t.x - m_position.x, t.y - m_position.y);
+	normVel.normalize();
+
+	desired_velocity.x = normVel.x * m_speed;
+	desired_velocity.y = normVel.y * m_speed;
+	Vector2f dVel(desired_velocity.x, desired_velocity.y);
+
+	return dVel;
 }

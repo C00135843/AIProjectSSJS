@@ -8,9 +8,10 @@ Predator::Predator(Vector2f position)
 	m_acceleration = Pvector(0, 0);
 	m_velocity = Pvector(rand() % 3 - 2, rand() % 3 - 2); // Allows for range of -2 -> 2;
 	m_position = Pvector(position.x, position.y);
-
+	stop = false;
 	m_texture.loadFromFile("Pics/Predator.png");
 	m_sprite.setTexture(m_texture);
+	m_sprite.setOrigin(m_texture.getSize().x / 2.f, m_texture.getSize().y / 2.f);
 
 	m_radarTexture.loadFromFile("Pics/Red.png");
 	m_radarSprite.setTexture(m_radarTexture);
@@ -33,6 +34,14 @@ float Predator::mod(float a, float b)
 void Predator::Draw(RenderWindow &window)
 {
 	window.draw(m_sprite);
+
+	if (m_bullets.size() > 0)
+	{
+		for each(Bullet* bullet in m_bullets)
+		{
+			bullet->Draw(window);
+		}
+	}
 }
 
 void Predator::DrawOnRadar(RenderWindow &window)
@@ -55,7 +64,7 @@ Pvector Predator::Separation(vector<Predator*>* v)
 	// algorithm
 
 	// Distance of field of vision for separation between boids
-	float desiredseparation = 50;
+	float desiredseparation = 65;
 
 	Pvector steer(0, 0);
 	int count = 0;
@@ -179,29 +188,83 @@ void Predator::run(vector <Predator> v)
 //are given by the three laws.
 void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h)
 {
-	flock(v);
-	applyForce(flockSeek(playerPos));
+	timeSinceLastUpdate = m_clock.getElapsedTime();
+	float time = timeSinceLastUpdate.asSeconds();
 
-	//To make the slow down not as abrupt
-	m_acceleration.mulScalar(.4); // NI
+	Vector2f pPos(playerPos.x, playerPos.y);
 
-	// Update velocity
-	m_velocity.addVector(m_acceleration);
+	if (Distance(pPos) < w / 18.f && Distance(pPos) > 200) //seek and fire
+	{
+		setFire(true);
+		stop = false;
+		flock(v);
+		applyForce(flockSeek(playerPos));
+	}
+	else if (Distance(pPos) < 200){ // just fire
+		setFire(true);
+		m_velocity = Pvector((Face(pPos)).x, (Face(pPos)).y);
+		float a = angle(m_velocity);
+		m_sprite.setRotation(a);
+		stop = true;
+	}
+	else //just seek
+	{
+		stop = false;
+		flock(v);
+		applyForce(flockSeek(playerPos));
+		setFire(false);
+	}
 
-	// Limit speed
-	m_velocity.limit(maxSpeed);// NI
-	m_position.addVector(m_velocity);// // NI Updates position
+	if (Fire())
+	{
+		if (time > 3.0f)
+		{
+			createMissile(w, h);
+		}
+	}
+	if (!stop)
+	{
+		//To make the slow down not as abrupt
+		m_acceleration.mulScalar(.4); // NI
 
-	// Reset accelertion to 0 each cycle
-	m_acceleration.mulScalar(0);// NI
+		// Update velocity
+		m_velocity.addVector(m_acceleration);
 
+		// Limit speed
+		m_velocity.limit(maxSpeed);// NI
+		m_position.addVector(m_velocity);// // NI Updates position
+
+		// Reset accelertion to 0 each cycle
+		m_acceleration.mulScalar(0);// NI
+		float a = angle(m_velocity);
+		m_sprite.setRotation(a);
+	}
 	m_position = Pvector(mod(m_position.x, w), mod(m_position.y, h));
 
-	float a = angle(m_velocity);
-	m_sprite.setRotation(a);
 	m_sprite.setPosition(Vector2f(m_position.x, m_position.y));
-}
 
+	UpdateBullets();
+
+
+}
+void Predator::UpdateBullets()
+{
+	if (m_bullets.size() > 0)
+	{
+		// Iterate through list of bullets
+		for (m_bulletIterator = m_bullets.begin(); m_bulletIterator != m_bullets.end(); ++m_bulletIterator)
+		{
+			(*m_bulletIterator)->Update();
+
+			// Remove bullet if out of bounds
+			if ((*m_bulletIterator)->OutOfBounds(GetPosition()))
+			{
+				m_bullets.erase(m_bulletIterator);
+				break;
+			}
+		}
+	}
+}
 // Applies all three laws for the flock of boids and modifies to keep them from
 // breaking the laws.
 void Predator::flock(vector<Predator*>* v)
@@ -221,6 +284,43 @@ void Predator::flock(vector<Predator*>* v)
 	applyForce(coh);
 }
 
+float Predator::Distance(Vector2f &p){
+	float distance;
+
+	distance = sqrt(((m_position.x - p.x)*(m_position.x - p.x)) + ((m_position.y - p.y)*(m_position.y - p.y)));
+
+	return distance;
+}
+Vector2f Predator::Face(Vector2f &v){
+	
+	Pvector desired_velocity;
+	Pvector steering;
+	Pvector normVel(v.x - m_position.x, v.y - m_position.y);
+	normVel.normalize();
+
+	desired_velocity.x = normVel.x * maxSpeed;
+	desired_velocity.y = normVel.y * maxSpeed;
+
+	Vector2f vel(desired_velocity.x, desired_velocity.y);
+	return vel;
+
+}
+
+void Predator::createMissile(int w,int h)
+{
+	Vector2f bulletPos;
+	bulletPos.x = m_position.x;
+	bulletPos.y = m_position.y;
+
+	Vector2f vel(m_velocity.x, m_velocity.y);
+	Bullet* bullet = new Bullet(bulletPos, vel, w/9, h/9, w, h,true);
+
+	m_bullets.push_back(bullet);
+	m_clock.restart();
+}
+
+
+
 // Calculates the angle for the velocity of a boid which allows the visual 
 // image to rotate in the direction that it is going in.
 float Predator::angle(Pvector v)
@@ -229,6 +329,17 @@ float Predator::angle(Pvector v)
 	float angle = (float)(atan2(v.x, -v.y) * 180 / PI);
 	return angle;
 }
+
+bool Predator::Fire()
+{
+	return m_fire;
+}
+
+void Predator::setFire(bool myFire)
+{
+	m_fire = myFire;
+}
+
 
 bool Predator::GetAlive()
 {

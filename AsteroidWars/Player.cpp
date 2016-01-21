@@ -16,6 +16,7 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 
 	m_squareTexture.loadFromFile("Pics/Green.png");
 	m_squareSprite = sf::Sprite(m_squareTexture);
+	m_squareSprite.setScale(2.0f, 2.0f);
 
 	// Set position
 	m_position.x = m_windowWidth / 2;
@@ -27,10 +28,8 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_velocity.y = 0.1f;
 
 	// Set origin
-	m_playerSprite.setOrigin(
-		m_playerSprite.getScale().x / 2.0f + (m_playerSprite.getGlobalBounds().width / 2),
-		m_playerSprite.getScale().y / 2.0f + (m_playerSprite.getGlobalBounds().height / 2)
-		);
+	m_playerSprite.setOrigin(m_playerTexture.getSize().x/2.f,m_playerTexture.getSize().y/2.f);
+
 
 	// Scale
 	m_playerSprite.setScale(0.125f, 0.125f);
@@ -131,7 +130,7 @@ void Player::Shoot()
 	bulletPos.x = m_position.x;
 	bulletPos.y = m_position.y;
 
-	Bullet* bullet = new Bullet(bulletPos, m_velocity, m_windowWidth, m_windowHeight, m_fullWidth, m_fullHeight);
+	Bullet* bullet = new Bullet(bulletPos, m_velocity, m_windowWidth, m_windowHeight, m_fullWidth, m_fullHeight,false);
 
 	m_bullets.push_back(bullet);
 }

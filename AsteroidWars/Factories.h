@@ -3,6 +3,7 @@
 #include "Pvector.h"
 #include "FactoryMissile.h"
 #include "Predator.h"
+#include "Obstacle.h"
 #include <list>
 
 using namespace std;
@@ -26,7 +27,7 @@ public:
 	void DecreaseHealth(){ health--; }
 	void flock(vector<Factories*>* v);
 
-	void Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos);
+	void Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, Pvector flockPos, vector<Obstacle*> obstacles);
 	void Draw(RenderWindow &window);
 	void DrawOnRadar(RenderWindow &window);
 	Pvector location;
@@ -45,12 +46,16 @@ public:
 	void CreateMissile(Vector2f playerPos);
 	bool GetCreatePredator();
 	void SetCreatePredator(bool myCreatePredator);
-
+	bool m_avoid;
 	Sprite GetSprite();
 
 	Pvector Face(Vector2f playerPos);
 
 	bool FactoryMissilePlayerCollision(Sprite&playerSprite);
+
+	bool inRangeOfObs(Vector2f);
+
+	void SetAvoid(bool a){ m_avoid = a; }
 
 private:
 	Vector2f m_Position;
@@ -110,6 +115,7 @@ private:
 	Pvector seek(Pvector v);
 	Pvector flockSeek(Pvector v);
 	Pvector Wander(int, int, Pvector);
+	Pvector avoid(Pvector obstalcePos, Pvector obstacleVel);
 	float angle(Pvector v);
 	bool flocker;
 	float health;

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Pvector.h"
 #define PI 3.141592635
 
 class FactoryMissile
@@ -15,13 +15,13 @@ private:
 	Sprite m_sprite;
 
 	float m_speed;
-
+	Vector2f seek(Pvector t);
 	bool alive;
 public:
 	FactoryMissile(Vector2f position, Vector2f velocity);
 
 	void Draw(RenderWindow &window);
-	void Update();
+	void Update(Vector2f &p);
 
 	bool GetAlive();
 	void SetAlive(bool myAlive);

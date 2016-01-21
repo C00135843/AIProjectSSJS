@@ -31,6 +31,7 @@ Obstacle::Obstacle(float xPos, float yPos, float angle, int fullWidth, int fullH
 	// Radar
 	m_radarTexture.loadFromFile("Pics/Yellow.png");
 	m_radarSprite = sf::Sprite(m_radarTexture);
+	m_radarSprite.setScale(2.0f, 2.0f);
 
 	m_position.x = xPos;
 	m_position.y = yPos;
@@ -82,6 +83,14 @@ void Obstacle::Update()
 bool Obstacle::CollisionWithSwarm(SwarmEnemy *swarmEnemy)
 {
 	if (swarmEnemy->GetSprite().getGlobalBounds().intersects(GetSprite().getGlobalBounds()))
+	{
+		return true;
+	}
+	return false;
+}
+bool Obstacle::CollisionWithFact(Sprite &factEnemy)
+{
+	if (factEnemy.getGlobalBounds().intersects(GetSprite().getGlobalBounds()))
 	{
 		return true;
 	}

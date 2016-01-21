@@ -1,14 +1,17 @@
 #include "stdafx.h"
 #include "Bullet.h"
 
-Bullet::Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, int fullWidth, int fullHeight)
+Bullet::Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, int fullWidth, int fullHeight,bool predator)
 {
 	// Load main menu background image
 	m_texture.loadFromFile("Pics/Bullet.png");
 	m_sprite = sf::Sprite(m_texture);
 
 	// Scale
-	m_sprite.setScale(0.25f, 0.25f);
+	if (predator)
+		m_sprite.setScale(0.125f, 0.125f);
+	else
+		m_sprite.setScale(0.25f, 0.25f);
 
 	m_speed = 3.0f;
 
@@ -42,6 +45,7 @@ bool Bullet::OutOfBounds(Vector2f playerPos)
 	return false;
 	}
 }
+
 
 float Bullet::DistanceFromPlayer(Vector2f playerPos)
 {
