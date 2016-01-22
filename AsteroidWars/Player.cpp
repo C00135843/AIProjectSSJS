@@ -212,6 +212,24 @@ bool Player::CheckSwarmCollision(SwarmEnemy *swarmEnemy)
 	return false;
 }
 
+bool Player::CheckPlayerFactoryCollision(Sprite &factory)
+{
+	if (m_playerSprite.getGlobalBounds().intersects(factory.getGlobalBounds()))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool Player::CheckPlayerPredatorCollision(Sprite &predator)
+{
+	if (m_playerSprite.getGlobalBounds().intersects(predator.getGlobalBounds()))
+	{
+		return true;
+	}
+	return false;
+}
+
 bool Player::CheckObstacleCollision(Obstacle *obstacle)
 {
 	if (m_playerSprite.getGlobalBounds().intersects(obstacle->GetSprite().getGlobalBounds()))

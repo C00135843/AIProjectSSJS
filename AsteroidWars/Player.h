@@ -28,6 +28,8 @@ public:
 
 	bool CheckBulletSwarmCollision(SwarmEnemy *swarmEnemy);
 	bool CheckSwarmCollision(SwarmEnemy *swarmEnemy);
+	bool CheckPlayerFactoryCollision(Sprite &factory);
+	bool CheckPlayerPredatorCollision(Sprite &predator);
 	bool CheckObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletFactoryCollision(Factories *factory);
