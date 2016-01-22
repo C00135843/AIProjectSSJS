@@ -255,11 +255,6 @@ Vector2f Player::GetVelocity()
 	return m_velocity;
 }
 
-list<Bullet*> Player::GetBullets()
-{
-	return m_bullets;
-}
-
 bool Player::CheckBulletSwarmCollision(SwarmEnemy *swarmEnemy)
 {
 	if (m_bullets.size() > 0)

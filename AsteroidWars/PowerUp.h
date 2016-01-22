@@ -13,7 +13,7 @@ enum e_type
 //! PowerUp Class
 /*!
 \This class is used to create power ups. There are three types of power ups Health,
-\Rate of fire and max speed increase. 
+\Rate of fire and max speed increase.
 */
 class PowerUp
 {
@@ -21,7 +21,7 @@ public:
 	/*!
 	\Constructor uses full width and height of the map to set position.
 	*/
-	PowerUp(int w, int h,int t);
+	PowerUp(int w, int h, int t);
 	~PowerUp(); //!< Deconstructor
 	/*!
 	\Void LoadAssets method loads all of the textures and assigns them to the sprite.
@@ -36,21 +36,21 @@ public:
 	*/
 	void DrawRadar(RenderWindow &win);
 	/*!
-	\ 
+	\
 	*/
 	Sprite GetSprite(){ return m_PowerUPSprite; }
 	int GetType();
 private:
-	Vector2f m_Position; /*!< */
-	int type;
-	int Full_WIDTH;
-	int Full_HEIGHT;
-	sf::Texture m_PowerUPTexture;
-	sf::Sprite m_PowerUPSprite;
-	sf::Texture radarTexture;
-	sf::Sprite radarSprite;
+	Vector2f m_Position;/*!< Vector2f variable m_Position. */
+	int type;/*!< int variable type for the type of powerup. */
+	int Full_WIDTH;/*!< int variable Full_WIDTH. */
+	int Full_HEIGHT;/*!< int variable Full_HEIGHT. */
+	sf::Texture m_PowerUPTexture;/*!< sf::Texture variable m_PowerUPTexture. */
+	sf::Sprite m_PowerUPSprite;/*!< sf::Sprite variable m_PowerUPSprite. */
+	sf::Texture radarTexture;/*!< sf::Texture variable radarTexture. */
+	sf::Sprite radarSprite;/*!< sf::Sprite variable radarSprite. */
 	bool alive;
-	
+
 
 
 };

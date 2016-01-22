@@ -9,8 +9,8 @@ using namespace std;
 #ifndef BOID_H_
 #define BOID_H_
 
-/*
-Brief description of Boid Class:
+//! Boid Class
+/*!
 //The boid class creates an object which has multiple vectors (location, velocity, acceleration)
 //Boids are given certain properties and rules to follow when interacting with other boids.
 //They are being used to simulate flocking patterns and properties
@@ -21,39 +21,40 @@ and they should not adhere to the three laws. However, they should adhere to
 cohesion -- how should they seek prey? Also, prey should be able to run away
 from predators. There are several ways to do this. The easiest way:
 
-	Predators are part of the flock. This means that when the boids check
-	through the vector of other boids, the predators are included. Check if
-	the boid being looked at is a predator, and if it is, calculate a Pvector
-	that maximizes separation.
+Predators are part of the flock. This means that when the boids check
+through the vector of other boids, the predators are included. Check if
+the boid being looked at is a predator, and if it is, calculate a Pvector
+that maximizes separation.
 */
-
 class Boid
 {
 public:
-	int m_id;
-	int m_inRange;
-	bool predator;
-	Pvector location;
-	Pvector velocity;
-	Pvector acceleration;
-	float maxSpeed;
-	float maxForce;
+	int m_id;/*!< int variable m_id */
+	int m_inRange;/*!< int variable m_inRange */
+	bool predator;/*!< bool variable predator */
+	Pvector location;/*!< Pvector variable location */
+	Pvector velocity;/*!< Pvector variable velocity */
+	Pvector acceleration;/*!< Pvector variable acceleration */
+	float maxSpeed;/*!< float variable maxSpeed */
+	float maxForce;/*!< float variable maxForce */
 
-	bool InRange();
-	void SetInRange(bool myInRange);
+	bool InRange();/*!< bool method InRange that returns the m_inRange boolean*/
+	void SetInRange(bool myInRange);/*!< void method SetInRange that sets the m_inRange boolean */
 
-	int GetID();
-	void SetID(int id);
+	int GetID();/*!< int method GetID that returns the m_id integer*/
+	void SetID(int id);/*!< void method SetID that sets the m_id integer*/
 
-	int timeToTend;
-	int timer;
-	bool tendTowardsPlayer;
+	int timeToTend;/*!< int variable timeToTend, tends boids towards the player */
+	int timer;/*!< int variable timer*/
+	bool tendTowardsPlayer;/*!< bool variable tendTowardsPlayer*/
 
-	bool m_avoid;
+	bool m_avoid;/*!< bool variable m_avoid, used to determine when to avoid boids*/
 
-	Boid() {} // Default constructor
+	Boid() {}/*!< Default constructor */ 
 
-	// Used constructor
+	/*!
+	void Boid method that sets the position/velocity/acceleration/maxpSpeed/maxForce of the boid
+	*/
 	Boid(float xPos, float yPos, int id)
 	{
 		SetInRange(false);
@@ -71,33 +72,15 @@ public:
 		tendTowardsPlayer = false;
 	}
 
-	// Constructor for predator check
-	Boid(float x, float y, bool predCheck) 
-	{
-		predator = predCheck;
-		if (predCheck == true) 
-		{
-			maxSpeed = 7.5;
-			maxForce = 0.5;
-			velocity = Pvector(rand()%3-1, rand()%3-1);
-		} else 
-		{
-			maxSpeed = 3.5;
-			maxForce = 0.5;
-			velocity = Pvector(rand()%3-2, rand()%3-2); // Allows for range of -2 -> 2
-		}
-		acceleration = Pvector(0, 0);
-		location = Pvector(x, y);
-	}
-
-	// >>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<
-
+	/*!
+	void applyForce method that applies a force to the Boids acceleration
+	*/
 	void applyForce(Pvector force);
 
 	// Three Laws that boids follow
-	Pvector Separation(vector<Boid> Boids);
-	Pvector Alignment(vector<Boid> Boids);
-	Pvector Cohesion(vector<Boid> Boids);
+	Pvector Separation(vector<Boid> Boids);/*!< Pvector method that separates the boids*/
+	Pvector Alignment(vector<Boid> Boids);/*!< Pvector method that aligns the boids*/
+	Pvector Cohesion(vector<Boid> Boids);/*!< Pvector method that makes the boids follow the cohesion method*/
 
 	//Functions involving SFML and visualisation linking
 	Pvector seek(Pvector v);
