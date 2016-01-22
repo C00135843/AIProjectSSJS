@@ -49,6 +49,10 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	// Bullets
 	m_shootTimer = 30;
 	m_shootTimerLimit = 30;
+
+	//powerup
+	increaseSpeed = false;
+	increaseROF = false;
 }
 
 float Player::mod(float a, float b)
@@ -64,6 +68,11 @@ void Player::Update()
 		// Shoot timer
 		if (m_shootTimer <= m_shootTimerLimit)
 			m_shootTimer++;
+
+		// if the speed was increased count 5 secs then set speed back to original
+		SpeedIncreaseTimer();
+		// if rate of fire increased count to 10 and set fire rate back to origin
+		ROFIncreaseTimer();
 
 		// Set alive
 		if (m_health <= 0)
@@ -120,6 +129,35 @@ void Player::Update()
 					break;
 				}
 			}
+		}
+	}
+}
+
+
+void Player::SpeedIncreaseTimer()
+{
+	if (increaseSpeed){
+		timeSinceLastUpdate = m_clock.getElapsedTime();
+		float time = timeSinceLastUpdate.asSeconds();
+		if (time >= 5.f)
+		{
+			m_speed = 5.0f;
+			increaseSpeed = false;
+		}
+
+
+	}
+}
+
+void Player::ROFIncreaseTimer()
+{
+	if (increaseROF){
+		timeSinceLastUpdate1 = m_Rclock.getElapsedTime();
+		float time = timeSinceLastUpdate1.asSeconds();
+		if (time >= 10.f)
+		{
+			m_shootTimerLimit = 30.f;
+			increaseROF = false;
 		}
 	}
 }
@@ -220,6 +258,47 @@ bool Player::CheckObstacleCollision(Obstacle *obstacle)
 	return false;
 }
 
+bool Player::CheckPowerUpCollision(PowerUp * powerUp){
+	bool collision = false;
+
+	if (m_playerSprite.getGlobalBounds().intersects(powerUp->GetSprite().getGlobalBounds())){
+		//increase speed of player by 1.5 
+		if (powerUp->GetType() == SPEED)
+		{
+			if (!increaseSpeed)
+			{
+				m_speed = 8.0f;
+				increaseSpeed = true;
+			}
+			m_clock.restart();
+			collision = true;
+		}
+		//increase rate of fire for 5 secs
+		else if (powerUp->GetType() == ROF){
+			if (!increaseROF)
+			{
+				m_shootTimerLimit = 15.f;
+				increaseROF = true;
+			}
+			m_Rclock.restart();
+			collision = true;
+		}
+		//increase health
+		else if (powerUp->GetType() == HEALTH){
+			if (m_health < 100)
+			{
+				m_health = 100;
+				collision = true;
+			}
+			
+		}
+		
+	}
+
+
+	return collision;
+}
+
 bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
 {
 	if (m_bullets.size() > 0)
@@ -236,6 +315,7 @@ bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
 	}
 	return false;
 }
+
 
 bool Player::CheckBulletFactoryCollision(Factories *factory)
 {

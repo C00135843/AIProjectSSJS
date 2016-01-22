@@ -18,7 +18,8 @@ public:
 		m_Position.x = rand() % Full_WIDTH + 1;
 		m_Position.y = rand() % Full_HEIGHT + 1;
 	}
-
+	Sprite GetSprite(){ return m_PowerUPSprite; }
+	int GetType();
 private:
 	Vector2f m_Position;
 	int type;

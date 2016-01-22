@@ -75,6 +75,8 @@ int main()
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
 	vector<Factories*>::iterator m_factIterator;
 	vector<Predator*>::iterator m_predatorIterator;
+	vector<Obstacle*>::iterator m_obstacleIterator;
+	vector<PowerUp*>::iterator m_powerUpIterator;
 
 	CreateFact(windowWidth, windowHeight);
 
@@ -85,7 +87,7 @@ int main()
 	vector<Obstacle*> obstacles;
 	vector<PowerUp*> powerUp;
 	Obstacle obstacleInstance;
-	vector<Obstacle*>::iterator m_obstacleIterator;
+
 	int noOfObstacles = 50;
 	int noOfPowerUPs = 10;
 
@@ -162,6 +164,17 @@ int main()
 
 		if (player.GetHealth() > 0)
 		{
+
+			//check collision between player and powerup
+			for (m_powerUpIterator = powerUp.begin(); m_powerUpIterator != powerUp.end(); ++m_powerUpIterator)
+			{
+				if (player.CheckPowerUpCollision(*m_powerUpIterator))
+				{
+					powerUp.erase(m_powerUpIterator);
+					break;
+				}
+			}
+
 			// Check collision between bullet and swarm
 			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
 			{
@@ -205,7 +218,7 @@ int main()
 
 		scene.Draw(window);
 		player.Draw(window);
-		for (int i = 0; i < noOfPowerUPs; i++)
+		for (int i = 0; i < powerUp.size(); i++)
 		{
 			powerUp[i]->Draw(window);
 		}

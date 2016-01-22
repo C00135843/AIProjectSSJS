@@ -7,6 +7,7 @@
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
 #include "Factories.h"
+#include "PowerUp.h"
 
 class Player
 {
@@ -31,6 +32,7 @@ public:
 	bool CheckObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletObstacleCollision(Obstacle *obstacle);
 	bool CheckBulletFactoryCollision(Factories *factory);
+	bool CheckPowerUpCollision(PowerUp *powerUp);
 
 	int GetHealth();
 	void SetHealth(int myHealth);
@@ -49,17 +51,25 @@ private:
 
 	float m_speed;
 	float m_rotationSpeed;
+	Clock m_clock;
+	Time timeSinceLastUpdate;
+
+	Clock m_Rclock;
+	Time timeSinceLastUpdate1;
 
 	list<Bullet*> m_bullets;
 	int m_shootTimer;
 	int m_shootTimerLimit;
 	std::list<Bullet*>::iterator m_bulletIterator;
+	bool increaseSpeed;
+	bool increaseROF;
 
 	int m_windowWidth;
 	int m_windowHeight;
 	int m_fullWidth;
 	int m_fullHeight;
-
+	void SpeedIncreaseTimer();
+	void ROFIncreaseTimer();
 	int m_health;
 	bool m_alive;
 };
