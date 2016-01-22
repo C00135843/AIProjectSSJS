@@ -17,7 +17,7 @@ Factories::Factories(int x, int y)
 	acceleration = Pvector(0, 0);
 	location = Pvector(m_Position.x, m_Position.y);
 
-	m_maxSpeed = 5.0;
+	m_maxSpeed = 3.0;
 
 	orientation = 0;
 	angleBetween = 0;
@@ -32,7 +32,7 @@ Factories::Factories(int x, int y)
 	m_fire = false;
 
 	fireTimer = 100;
-	fireTime = 100;
+	fireTime = 200;
 
 	oldVelocity = velocity;
 
@@ -46,7 +46,7 @@ void Factories::LoadAsset()
 
 	m_radarTexture.loadFromFile("Pics/FactoryRadar.png");
 	m_radarSprite = sf::Sprite(m_radarTexture);
-	m_radarSprite.setScale(2.0f, 2.0f);
+	m_radarSprite.setScale(4.0f, 4.0f);
 
 	//set Origin
 	m_factorySprite.setOrigin(m_factoryTexture.getSize().x / 2.f, m_factoryTexture.getSize().y / 2.f);
@@ -85,7 +85,7 @@ void Factories::Update(Vector2f playerPos, int w, int h, vector<Factories*>* v, 
 	Pvector pPos(playerPos.x, playerPos.y);
 
 	// if the factory gets in range of the player evade
-	if (fPos.distance(pPos) > 200 && fPos.distance(pPos) < 800 && fireTimer >= fireTime)// FIRE
+	if (fPos.distance(pPos) > 200 && fPos.distance(pPos) < 600 && fireTimer >= fireTime)// FIRE
 	{
 		SetFire(true);
 		fireTimer = 0;
@@ -205,7 +205,7 @@ Pvector Factories::Wander(int w, int h, Pvector p)
 		wtarget.x = rand() % w + 1;
 		wtarget.y = rand() % h + 1;
 	}
-	else if (count >= 60)
+	else if (count >= 120)
 	{
 		wtarget.x = rand() % w + 1;
 		wtarget.y = rand() % h + 1;

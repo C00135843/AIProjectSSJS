@@ -10,8 +10,9 @@ SwarmEnemy::SwarmEnemy(int id)
 	m_sprite = sf::Sprite(m_texture);
 
 	// Radar
-	m_radarTexture.loadFromFile("Pics/SwarmBoidRadar.png");
+	m_radarTexture.loadFromFile("Pics/SwarmBoidRadar2.png");
 	m_radarSprite = sf::Sprite(m_radarTexture);
+	m_radarSprite.setScale(4.0f, 4.0f);
 
 	// Scale
 	m_sprite.setScale(0.9f, 0.9f);

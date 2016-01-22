@@ -13,7 +13,10 @@ Bullet::Bullet(Vector2f pos, Vector2f vel, int windowWidth, int windowHeight, in
 	else
 		m_sprite.setScale(0.25f, 0.25f);
 
-	m_speed = 3.0f;
+	if (predator)
+		m_speed = 3.0f;
+	else
+		m_speed = 11.0f;
 
 	m_velocity.x = vel.x * m_speed;
 	m_velocity.y = vel.y * m_speed;

@@ -56,7 +56,7 @@ void Flock::swarming(Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> o
 }
 
 // Check distance of each boid in the flock from the player
-void Flock::GetDisanceFromPlayer(Vector2f &playerPos)
+void Flock::GetDisanceFromPlayer(Vector2f &playerPos, int windowHeight)
 {
 	float distance;
 
@@ -67,7 +67,7 @@ void Flock::GetDisanceFromPlayer(Vector2f &playerPos)
 		distance = sqrt(((flockIterator->location.x - playerPos.x)*(flockIterator->location.x - playerPos.x)) + ((flockIterator->location.y - playerPos.y)*(flockIterator->location.y - playerPos.y)));
 		
 		// Check if in range
-		if (distance <= 100)
+		if (distance <= windowHeight/2)
 		{
 			flockIterator->SetInRange(true);
 		}

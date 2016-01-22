@@ -32,7 +32,6 @@ void FactoryMissile::Update(Vector2f &p)
 {
 	timeSinceLastUpdate = m_clock.getElapsedTime();
 	float time = timeSinceLastUpdate.asSeconds();
-
 	if (time >= 10.0f)
 	{
 		alive = false;

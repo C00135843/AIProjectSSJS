@@ -42,7 +42,7 @@ public:
 	void flocking();
 	void swarming(Vector2f playerPos, Vector2f playerVel, vector<Obstacle*> obstacles);
 
-	void GetDisanceFromPlayer(Vector2f &playerPos);
+	void GetDisanceFromPlayer(Vector2f &playerPos, int windowHeight);
 	bool InRangeOfObstacle(Vector2f &obstalcePos);
 
 	bool InRange();

@@ -88,6 +88,7 @@
     <ClInclude Include="Flock.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="PowerUp.h" />
     <ClInclude Include="Predator.h" />
     <ClInclude Include="Pvector.h" />
     <ClInclude Include="Scene.h" />
@@ -104,6 +105,7 @@
     <ClCompile Include="Flock.cpp" />
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PowerUp.cpp" />
     <ClCompile Include="Predator.cpp" />
     <ClCompile Include="Pvector.cpp" />
     <ClCompile Include="Scene.cpp" />

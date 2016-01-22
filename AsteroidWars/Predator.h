@@ -4,6 +4,7 @@
 #include "Pvector.h"
 #include "Bullet.h"
 #include "Obstacle.h"
+#include "PowerUp.h"
 
 class Predator
 {
@@ -35,7 +36,7 @@ public:
 	void Draw(RenderWindow &window);
 	void DrawOnRadar(RenderWindow &window);
 	void Update(vector<Predator*>* v, Pvector &playerPos, int width, int height, vector<Obstacle*> obstacles);
-
+	bool CheckPowerUpCollision(PowerUp *powerUp);
 	bool GetAlive();
 	void SetAlive(bool myAlive);
 	float Distance(Vector2f &p);

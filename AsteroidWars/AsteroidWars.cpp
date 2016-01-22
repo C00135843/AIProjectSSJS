@@ -9,6 +9,7 @@
 #include "SwarmEnemy.h"
 #include "Obstacle.h"
 #include "Predator.h"
+#include "PowerUp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,8 +28,8 @@ void CreateBoids(int, int);
 void CreateFact(int, int);
 void CreatePredators(Vector2f position);
 void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite &playerSprite, vector<Obstacle*> obstacles, Player &player);
-void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
-void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles);
+void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f &playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles, Player &player);
 
 int flockcount = 0;
 Pvector flockWanderPos;
@@ -75,24 +76,33 @@ int main()
 	Scene scene(windowWidth, windowHeight, fullWidth, fullHeight);
 	vector<SwarmEnemy*>::iterator m_swarmIterator;
 	vector<Predator*>::iterator m_predatorIterator;
+	vector<Obstacle*>::iterator m_obstacleIterator;
+	vector<PowerUp*>::iterator m_powerUpIterator;
 
-	//CreateFact(fullWidth, fullHeight);
-	CreateFact(windowWidth, windowHeight);
+	CreateFact(fullWidth, fullHeight);
+	//CreateFact(windowWidth, windowHeight);
 
 	// Create boids
 	CreateBoids(windowWidth, windowHeight);
 
 	// Create obstalces
 	vector<Obstacle*> obstacles;
+	vector<PowerUp*> powerUp;
 	Obstacle obstacleInstance;
-	vector<Obstacle*>::iterator m_obstacleIterator;
+
 	int noOfObstacles = 50;
+	int noOfPowerUPs = 10;
 
 	for (int i = 0; i < noOfObstacles; i++)
 	{
 		obstacles = obstacleInstance.CreateObstacle(fullWidth, fullHeight, player.GetPosition(), obstacles);
 	}
-
+	for (int i = 0; i < noOfPowerUPs; i++)
+	{
+		int randNum = (rand() % 3) + 1;
+		PowerUp* p = new PowerUp(fullWidth, fullHeight, randNum);
+		powerUp.push_back(p);
+	}
 	// Start game loop 
 	while (window.isOpen())
 	{
@@ -148,12 +158,38 @@ int main()
 
 		// Update & Draw
 		player.Update();
-		flock.GetDisanceFromPlayer(player.GetPosition());
+		flock.GetDisanceFromPlayer(player.GetPosition(), windowWidth);
 
 		#pragma region Check Collisions
 
 		if (player.GetHealth() > 0)
 		{
+
+			//check collision between player and powerup
+			for (m_powerUpIterator = powerUp.begin(); m_powerUpIterator != powerUp.end(); ++m_powerUpIterator)
+			{
+				if (player.CheckPowerUpCollision(*m_powerUpIterator))
+				{
+					powerUp.erase(m_powerUpIterator);
+					break;
+				}
+			}
+			bool finished = false;
+			for (m_predatorIterator = predators.begin(); m_predatorIterator != predators.end(); ++m_predatorIterator)
+			{
+				for (m_powerUpIterator = powerUp.begin(); m_powerUpIterator != powerUp.end(); ++m_powerUpIterator)
+				{
+
+					if ((*m_predatorIterator)->CheckPowerUpCollision(*m_powerUpIterator))
+					{
+						powerUp.erase(m_powerUpIterator);
+						finished = true;
+						break;
+					}
+				}
+			}
+
+
 			// Check collision between bullet and swarm
 			for (m_swarmIterator = swarmEnemies.begin(); m_swarmIterator != swarmEnemies.end(); ++m_swarmIterator)
 			{
@@ -204,10 +240,17 @@ int main()
 
 		scene.Draw(window);
 		player.Draw(window);
-
-		//UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
+		player.DrawHealthBar(window);
+		for (int i = 0; i < powerUp.size(); i++)
+		{
+			powerUp[i]->Draw(window);
+		}
+		
+		// void UpdateBoids(sf::RenderWindow &window, int, int, Vector2f playerPos, Vector2f &playerVel, vector<Obstacle*> obstacles);
+		UpdateBoids(window, fullWidth, fullHeight, player.GetPosition(), player.GetVelocity(), obstacles);
 		UpdateFact(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles, player);
-		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles);
+		UpdatePredators(window, player.GetPosition(), windowWidth, windowHeight, player.GetSprite(), obstacles, player);
+
 
 		#pragma region Obstacles
 
@@ -231,7 +274,7 @@ int main()
 				obstacles.erase(m_obstacleIterator);
 
 				// Collision with an obstacle results in death!
-				//player.SetHealth(player.GetHealth() - 100);
+				player.SetHealth(player.GetHealth() - 100);
 				break;
 			}
 
@@ -357,6 +400,10 @@ int main()
 		{
 			predators[i]->DrawOnRadar(window);
 		}
+		for (int i = 0; i < powerUp.size(); i++)
+		{
+			powerUp[i]->DrawRadar(window);
+		}
 
 		#pragma endregion
 
@@ -372,17 +419,17 @@ int main()
 // Create boids for swarm enemies
 void CreateBoids(int window_width, int window_height)
 {
-	//int noOfBoids = 15;
+	int noOfBoids = 15;
 
-	//for (int i = 0; i < noOfBoids; i++)
-	//{
-	//	Boid b(window_width, window_height, i);// Create boid
-	//	SwarmEnemy *swarmEnemy = new SwarmEnemy(i);
+	for (int i = 0; i < noOfBoids; i++)
+	{
+		Boid b(window_width, window_height, i);// Create boid
+		SwarmEnemy *swarmEnemy = new SwarmEnemy(i);
 
-	//	// Adding the boid to the flock and adding the ships to the vector swarmEnemies
-	//	flock.addBoid(b, i);
-	//	swarmEnemies.push_back(swarmEnemy);
-	//}
+		// Adding the boid to the flock and adding the ships to the vector swarmEnemies
+		flock.addBoid(b, i);
+		swarmEnemies.push_back(swarmEnemy);
+	}
 }
 
 void CreateFact(int window_width, int window_height)
@@ -407,14 +454,17 @@ void CreatePredators(Vector2f position)
 	predators.push_back(predator);
 }
 
-void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles)
+void UpdatePredators(sf::RenderWindow &window, Vector2f &playerPos, int w, int h, Sprite&playerSprite, vector<Obstacle*> obstacles,Player &p)
 {
 	if (predators.size() > 0)
 	{
 		for (int i = 0; i < predators.size(); i++)
 		{
 			predators[i]->Update(&predators, Pvector(playerPos.x, playerPos.y), w * 9, h * 9, obstacles);
-			predators[i]->BulletPlayerCollision(playerSprite);
+			if (predators[i]->BulletPlayerCollision(playerSprite))
+			{
+				p.SetHealth(p.GetHealth() - 10);
+			}
 			predators[i]->Draw(window);
 		}
 	}
@@ -444,7 +494,10 @@ void UpdateFact(sf::RenderWindow &window, Vector2f p, int w, int h, Sprite&playe
 		if ((*m_factIterator)->getAlive() == true)
 		{
 			(*m_factIterator)->Update(p, w * 9, h * 9, &factEnemies, Pvector(0, 0), obstacles);
-			(*m_factIterator)->FactoryMissilePlayerCollision(playerSprite);
+			if ((*m_factIterator)->FactoryMissilePlayerCollision(playerSprite))
+			{
+				player.SetHealth(player.GetHealth() - 20);
+			}
 			(*m_factIterator)->Draw(window);
 
 			// Call create a predator if we can create a predator

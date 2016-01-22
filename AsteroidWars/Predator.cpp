@@ -13,7 +13,7 @@ Predator::Predator(Vector2f position)
 	m_sprite.setTexture(m_texture);
 	m_sprite.setOrigin(m_texture.getSize().x / 2.f, m_texture.getSize().y / 2.f);
 
-	m_radarTexture.loadFromFile("Pics/Red.png");
+	m_radarTexture.loadFromFile("Pics/Blue.png");
 	m_radarSprite.setTexture(m_radarTexture);
 	m_radarSprite.setScale(2.0f, 2.0f);
 
@@ -195,7 +195,7 @@ void Predator::Update(vector<Predator*>* v, Pvector &playerPos, int w, int h, ve
 
 	Vector2f pPos(playerPos.x, playerPos.y);
 
-	if (Distance(pPos) < w / 18.f && Distance(pPos) > 200) //seek and fire
+	if (Distance(pPos) < h / 18.f && Distance(pPos) > 200) //seek and fire
 	{
 		setFire(true);
 		stop = false;
@@ -326,6 +326,18 @@ Vector2f Predator::Face(Vector2f &v){
 	Vector2f vel(desired_velocity.x, desired_velocity.y);
 	return vel;
 
+}
+
+bool Predator::CheckPowerUpCollision(PowerUp * powerUp){
+	bool collision = false;
+
+	if (m_sprite.getGlobalBounds().intersects(powerUp->GetSprite().getGlobalBounds())){
+		//increase speed of player by 1.5 
+		collision = true;
+	}
+
+
+	return collision;
 }
 
 bool Predator::inRangeOfObs(Vector2f obstalcePos)

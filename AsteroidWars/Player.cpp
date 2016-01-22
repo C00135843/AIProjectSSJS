@@ -17,7 +17,12 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 
 	m_squareTexture.loadFromFile("Pics/Green.png");
 	m_squareSprite = sf::Sprite(m_squareTexture);
-	m_squareSprite.setScale(2.0f, 2.0f);
+	m_squareSprite.setScale(4.0f, 4.0f);
+
+	cHealth.loadFromFile("Pics/greenHealth.png");
+	fHealth.loadFromFile("Pics/redHealth.png");
+	currentHealth.setTexture(cHealth);
+	fullHealth.setTexture(fHealth);
 
 	// Set position
 	m_position.x = m_windowWidth / 2;
@@ -40,7 +45,8 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	m_rotation = 0;
 	m_playerSprite.rotate(m_rotation);
 
-	m_speed = 5.0f;
+	maxSpeed = 7.0f;
+	m_speed = 0.0f;
 	m_rotationSpeed = 3.0f;
 
 	// Set health & Alive
@@ -50,6 +56,10 @@ Player::Player(int windowWidth, int windowHeight, int fullWidth, int fullHeight)
 	// Bullets
 	m_shootTimer = 30;
 	m_shootTimerLimit = 30;
+
+	//powerup
+	increaseSpeed = false;
+	increaseROF = false;
 }
 
 float Player::mod(float a, float b)
@@ -65,6 +75,11 @@ void Player::Update()
 		// Shoot timer
 		if (m_shootTimer <= m_shootTimerLimit)
 			m_shootTimer++;
+
+		// if the speed was increased count 5 secs then set speed back to original
+		SpeedIncreaseTimer();
+		// if rate of fire increased count to 10 and set fire rate back to origin
+		ROFIncreaseTimer();
 
 		// Set alive
 		if (m_health <= 0)
@@ -85,9 +100,11 @@ void Player::Update()
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Up) || Keyboard::isKeyPressed(Keyboard::W))
 		{
-			m_position += m_velocity;
-			m_position = Vector2f(mod(m_position.x, m_fullWidth), mod(m_position.y, m_fullHeight));
-			m_playerSprite.setPosition(m_position);
+
+			if (m_speed < maxSpeed)
+			{
+				m_speed += .05f;
+			}
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Space))
 		{
@@ -97,10 +114,19 @@ void Player::Update()
 				m_shootTimer = 0;
 			}
 		}
-
+		if (m_speed > 0.1)
+		{
+			m_speed -= .02f;
+		}
+		m_position += m_velocity;
+		m_position = Vector2f(mod(m_position.x, m_fullWidth), mod(m_position.y, m_fullHeight));
+		m_playerSprite.setPosition(m_position);
 		// Set velocity
-		m_velocity.x = (float)sin(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
-		m_velocity.y = -(float)cos(m_playerSprite.getRotation() *3.14159265 / 180) * m_speed;
+		m_direction.x = (float)sin(m_playerSprite.getRotation() *3.14159265 / 180);
+		m_direction.y = -(float)cos(m_playerSprite.getRotation() *3.14159265 / 180);
+
+		m_velocity.x = m_direction.x * m_speed;
+		m_velocity.y = m_direction.y * m_speed;
 
 		//cout << m_velocity.x << ", " << m_velocity.y << endl;
 
@@ -125,13 +151,42 @@ void Player::Update()
 	}
 }
 
+
+void Player::SpeedIncreaseTimer()
+{
+	if (increaseSpeed){
+		timeSinceLastUpdate = m_clock.getElapsedTime();
+		float time = timeSinceLastUpdate.asSeconds();
+		if (time >= 7.f)
+		{
+			maxSpeed = 7.0f;
+			increaseSpeed = false;
+		}
+
+
+	}
+}
+
+void Player::ROFIncreaseTimer()
+{
+	if (increaseROF){
+		timeSinceLastUpdate1 = m_Rclock.getElapsedTime();
+		float time = timeSinceLastUpdate1.asSeconds();
+		if (time >= 10.f)
+		{
+			m_shootTimerLimit = 30.f;
+			increaseROF = false;
+		}
+	}
+}
+
 void Player::Shoot()
 {
 	Vector2f bulletPos;
 	bulletPos.x = m_position.x;
 	bulletPos.y = m_position.y;
 
-	Bullet* bullet = new Bullet(bulletPos, m_velocity, m_windowWidth, m_windowHeight, m_fullWidth, m_fullHeight,false);
+	Bullet* bullet = new Bullet(bulletPos, m_direction, m_windowWidth, m_windowHeight, m_fullWidth, m_fullHeight,false);
 
 	m_bullets.push_back(bullet);
 }
@@ -160,6 +215,25 @@ void Player::DrawOnRadar(RenderWindow &window)
 		m_squareSprite.setPosition(GetPosition());
 		window.draw(m_squareSprite);
 	}
+}
+
+void Player::DrawHealthBar(RenderWindow &win)
+{
+	currentHealth.setPosition(win.getView().getCenter().x - 125, win.getView().getCenter().y - 440);
+	fullHealth.setPosition(win.getView().getCenter().x - 125, win.getView().getCenter().y - 440);
+	if (m_health>=0){
+
+		currentHealth.setTextureRect(IntRect(0, 0, 2.5 * GetHealth(), 25));
+		fullHealth.setTextureRect(IntRect(0, 0, 250, 25));
+	}
+	else
+	{
+		currentHealth.setTextureRect(IntRect(0, 0, 0, 25));
+		fullHealth.setTextureRect(IntRect(0, 0, 250, 25));
+	}
+		win.draw(fullHealth);
+		win.draw(currentHealth);
+	
 }
 
 Vector2f Player::GetCentre()
@@ -239,6 +313,47 @@ bool Player::CheckObstacleCollision(Obstacle *obstacle)
 	return false;
 }
 
+bool Player::CheckPowerUpCollision(PowerUp * powerUp){
+	bool collision = false;
+
+	if (m_playerSprite.getGlobalBounds().intersects(powerUp->GetSprite().getGlobalBounds())){
+		//increase speed of player by 1.5 
+		if (powerUp->GetType() == SPEED)
+		{
+			if (!increaseSpeed)
+			{
+				maxSpeed = 10.0f;
+				increaseSpeed = true;
+			}
+			m_clock.restart();
+			collision = true;
+		}
+		//increase rate of fire for 5 secs
+		else if (powerUp->GetType() == ROF){
+			if (!increaseROF)
+			{
+				m_shootTimerLimit = 15.f;
+				increaseROF = true;
+			}
+			m_Rclock.restart();
+			collision = true;
+		}
+		//increase health
+		else if (powerUp->GetType() == HEALTH){
+			if (m_health < 100)
+			{
+				m_health = 100;
+				collision = true;
+			}
+			
+		}
+		
+	}
+
+
+	return collision;
+}
+
 bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
 {
 	if (m_bullets.size() > 0)
@@ -255,6 +370,7 @@ bool Player::CheckBulletObstacleCollision(Obstacle *obstacle)
 	}
 	return false;
 }
+
 
 bool Player::CheckBulletFactoryCollision(Factories *factory)
 {
